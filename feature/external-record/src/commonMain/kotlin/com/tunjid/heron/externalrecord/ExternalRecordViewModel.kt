@@ -14,20 +14,20 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.standard.publication
+package com.tunjid.heron.externalrecord
 
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.StandardDocument
-import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.externalrecord.di.ExternalRecordRequest
+import com.tunjid.heron.externalrecord.di.externalRecordRequest
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.standard.publication.di.PublicationRequest
-import com.tunjid.heron.standard.publication.di.publicationRequest
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.ui.toWritable
@@ -49,24 +49,24 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 
 @Stable
-internal interface StandardPublicationStateHolder :
+internal interface ExternalRecordStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface StandardPublicationViewModelInitializer {
+fun interface ExternalRecordViewModelInitializer {
     fun invoke(
         scope: CoroutineScope,
         route: Route,
-    ): ActualStandardPublicationViewModel
+    ): ActualExternalRecordViewModel
 }
 
 @Stable
-class ActualStandardPublicationViewModel(
+class ActualExternalRecordViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
 ) : ViewModel(viewModelScope = scope),
-    StandardPublicationStateHolder,
+    ExternalRecordStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
@@ -82,7 +82,7 @@ class ActualStandardPublicationViewModel(
             state = State(route).toSnapshotMutable(),
             started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
             producer = { state, actions ->
-                launchPublicationMutations(
+                launchRecordMutations(
                     state = state,
                     route = route,
                     viewModelScope = scope,
@@ -111,34 +111,42 @@ class ActualStandardPublicationViewModel(
 }
 
 context(productionScope: CoroutineScope)
-private suspend fun launchPublicationMutations(
+private suspend fun launchRecordMutations(
     state: State.Mutable,
     route: Route,
     viewModelScope: CoroutineScope,
     profileRepository: ProfileRepository,
     recordRepository: RecordRepository,
 ) {
-    val publicationUri = state.publication?.uri ?: when (val request = route.publicationRequest) {
-        is PublicationRequest.WithUri -> request.uri
-        is PublicationRequest.WithProfile ->
+    val recordUri = state.record?.embeddableRecordUri ?: when (val request = route.externalRecordRequest) {
+        is ExternalRecordRequest.WithUri -> request.uri
+        is ExternalRecordRequest.WithProfile ->
             recordUriOrNull(
                 profileId = profileRepository.profile(request.profileHandleOrId)
                     .first()
                     .did,
-                namespace = StandardPublicationUri.NAMESPACE,
-                recordKey = RecordKey(request.publicationUriSuffix),
-            ) as? StandardPublicationUri
+                namespace = request.namespace,
+                recordKey = request.recordKey,
+            ) as? EmbeddableRecordUri
     } ?: return
 
-    if (state.documentsTilingStateHolder == null) {
-        state.documentsTilingStateHolder = viewModelScope.documentsStateHolder(
-            publicationUri = publicationUri,
-            recordRepository = recordRepository,
-        )
-    }
-
-    recordRepository.publication(publicationUri).launchedCollect {
-        state.publication = it
+    when (recordUri) {
+        is StandardPublicationUri -> {
+            if (state.stateHolders.isEmpty()) {
+                state.stateHolders = listOf(
+                    ExternalRecordStateHolders.Documents(
+                        mutator = viewModelScope.documentsStateHolder(
+                            publicationUri = recordUri,
+                            recordRepository = recordRepository,
+                        ),
+                    ),
+                )
+            }
+            recordRepository.publication(recordUri).launchedCollect {
+                state.record = it
+            }
+        }
+        else -> Unit
     }
 }
 

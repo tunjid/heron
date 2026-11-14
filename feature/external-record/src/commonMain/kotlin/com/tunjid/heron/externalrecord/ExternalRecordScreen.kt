@@ -14,10 +14,9 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.standard.publication
+package com.tunjid.heron.externalrecord
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +27,8 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.pullToRefresh
@@ -41,6 +42,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.link
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.tiling.TilingState
@@ -71,29 +73,33 @@ import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @Composable
-internal fun StandardPublicationScreen(
+internal fun ExternalRecordScreen(
     paneScaffoldState: PaneScaffoldState,
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val pagerState = rememberPagerState { state.stateHolders.size }
+
     val pinnedCollapsingHeaderState = rememberPinnedCollapsingHeaderState(
         pinnedHeight = UiTokens.statusAndToolbarHeight,
         initialExpandedHeight = 800.dp,
     )
 
     val pullToRefreshState = rememberPullToRefreshState()
+    val isRefreshing = state.stateHolders.getOrNull(pagerState.currentPage)
+        ?.isRefreshing == true
 
     CollapsingHeaderLayout(
         modifier = modifier
             .fillMaxSize()
             .paneClip()
             .pullToRefresh(
-                isRefreshing = state.isRefreshing,
+                isRefreshing = isRefreshing,
                 state = pullToRefreshState,
                 onRefresh = {
-                    state.documentsTilingStateHolder
-                        ?.accept(TilingState.Action.Refresh)
+                    state.stateHolders.getOrNull(pagerState.currentPage)
+                        ?.refresh()
                 },
             ),
         state = pinnedCollapsingHeaderState.collapsingHeaderState,
@@ -124,37 +130,13 @@ internal fun StandardPublicationScreen(
                         .fillMaxWidth()
                         .height(UiTokens.statusAndToolbarHeight),
                 )
-                state.publication?.description
-                    ?.takeIf(String::isNotBlank)
-                    ?.let { description ->
-                        val textLinks = remember(description) {
-                            AnnotatedString(description).links()
-                        }
-                        val annotatedText = rememberFormattedTextPost(
-                            text = description,
-                            textLinks = textLinks,
-                            onLinkTargetClicked = navigableLinkTargetHandler { navigable ->
-                                actions(
-                                    Action.Navigate.To(
-                                        pathDestination(
-                                            path = navigable.path,
-                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                        ),
-                                    ),
-                                )
-                            },
-                        )
-                        Text(
-                            modifier = Modifier
-                                .padding(
-                                    vertical = 8.dp,
-                                ),
-                            text = annotatedText,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = MaterialTheme.colorScheme.onSurface,
-                            ),
-                        )
-                    }
+                when (val record = state.record) {
+                    is StandardPublication -> PublicationHeader(
+                        publication = record,
+                        actions = actions,
+                    )
+                    else -> Unit
+                }
             }
             DismissableRefreshIndicator(
                 modifier = Modifier
@@ -162,12 +144,12 @@ internal fun StandardPublicationScreen(
                         state = pinnedCollapsingHeaderState,
                     ),
                 state = pullToRefreshState,
-                isRefreshing = state.isRefreshing,
+                isRefreshing = isRefreshing,
                 onDismissRequest = {},
             )
         },
         body = {
-            Box(
+            HorizontalPager(
                 modifier = Modifier
                     .fillMaxSize()
                     .headerBlur(
@@ -175,16 +157,56 @@ internal fun StandardPublicationScreen(
                             pinnedCollapsingHeaderState = pinnedCollapsingHeaderState,
                         ),
                     ),
-            ) {
-                state.documentsTilingStateHolder?.let { holder ->
-                    Documents(
-                        holder = holder,
-                        paneScaffoldState = paneScaffoldState,
-                        actions = actions,
-                    )
-                }
-            }
+                state = pagerState,
+                key = { page -> state.stateHolders[page].key },
+                pageContent = { page ->
+                    when (val stateHolder = state.stateHolders[page]) {
+                        is ExternalRecordStateHolders.Documents -> Documents(
+                            holder = stateHolder,
+                            paneScaffoldState = paneScaffoldState,
+                            actions = actions,
+                        )
+                    }
+                },
+            )
         },
+    )
+}
+
+@Composable
+private fun PublicationHeader(
+    publication: StandardPublication,
+    actions: (Action) -> Unit,
+) {
+    val description = publication.description
+        ?.takeIf(String::isNotBlank)
+        ?: return
+    val textLinks = remember(description) {
+        AnnotatedString(description).links()
+    }
+    val annotatedText = rememberFormattedTextPost(
+        text = description,
+        textLinks = textLinks,
+        onLinkTargetClicked = navigableLinkTargetHandler { navigable ->
+            actions(
+                Action.Navigate.To(
+                    pathDestination(
+                        path = navigable.path,
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                    ),
+                ),
+            )
+        },
+    )
+    Text(
+        modifier = Modifier
+            .padding(
+                vertical = 8.dp,
+            ),
+        text = annotatedText,
+        style = MaterialTheme.typography.bodyMedium.copy(
+            color = MaterialTheme.colorScheme.onSurface,
+        ),
     )
 }
 

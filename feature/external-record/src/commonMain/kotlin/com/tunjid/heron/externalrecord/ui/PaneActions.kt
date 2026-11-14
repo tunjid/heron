@@ -14,14 +14,15 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.standard.publication.ui
+package com.tunjid.heron.externalrecord.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.standard.publication.Action
-import com.tunjid.heron.standard.publication.State
+import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.externalrecord.Action
+import com.tunjid.heron.externalrecord.State
 import com.tunjid.heron.timeline.ui.PostAction
 
 @Composable
@@ -29,11 +30,11 @@ internal fun PaneActions(
     state: State,
     actions: (Action) -> Unit,
 ) {
-    state.publication?.let {
-        SubscribeButton(
+    when (val record = state.record) {
+        is StandardPublication -> SubscribeButton(
             modifier = Modifier
                 .padding(horizontal = 8.dp),
-            publication = it,
+            publication = record,
             onSubscriptionToggled = { publication, _ ->
                 actions(
                     Action.RecordInteraction(
@@ -44,5 +45,6 @@ internal fun PaneActions(
                 )
             },
         )
+        else -> Unit
     }
 }

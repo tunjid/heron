@@ -14,20 +14,23 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.standard.publication.di
+package com.tunjid.heron.externalrecord.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.utilities.getAsRawUri
-import com.tunjid.heron.standard.publication.Action
-import com.tunjid.heron.standard.publication.StandardPublicationScreen
-import com.tunjid.heron.standard.publication.StandardPublicationStateHolder
-import com.tunjid.heron.standard.publication.StandardPublicationViewModelInitializer
-import com.tunjid.heron.standard.publication.ui.PaneActions
-import com.tunjid.heron.standard.publication.ui.PublicationTitle
+import com.tunjid.heron.externalrecord.Action
+import com.tunjid.heron.externalrecord.ExternalRecordScreen
+import com.tunjid.heron.externalrecord.ExternalRecordStateHolder
+import com.tunjid.heron.externalrecord.ExternalRecordViewModelInitializer
+import com.tunjid.heron.externalrecord.ui.PaneActions
+import com.tunjid.heron.externalrecord.ui.PublicationTitle
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -75,15 +78,16 @@ private fun createRoute(
     ),
 )
 
-internal sealed class PublicationRequest {
+internal sealed class ExternalRecordRequest {
     data class WithProfile(
         val profileHandleOrId: ProfileHandleOrId,
-        val publicationUriSuffix: String,
-    ) : PublicationRequest()
+        val namespace: String,
+        val recordKey: RecordKey,
+    ) : ExternalRecordRequest()
 
     data class WithUri(
-        val uri: StandardPublicationUri,
-    ) : PublicationRequest()
+        val uri: EmbeddableRecordUri,
+    ) : ExternalRecordRequest()
 }
 
 private val Route.profileId by mappedRoutePath(
@@ -94,13 +98,14 @@ private val Route.publicationUriSuffix by routePath()
 
 private val RequestTrie = trieOf(
     StandardPublicationRoutePattern to { route: Route ->
-        PublicationRequest.WithProfile(
+        ExternalRecordRequest.WithProfile(
             profileHandleOrId = route.profileId,
-            publicationUriSuffix = route.publicationUriSuffix,
+            namespace = StandardPublicationUri.NAMESPACE,
+            recordKey = RecordKey(route.publicationUriSuffix),
         )
     },
     StandardPublicationUriRoutePattern to { route: Route ->
-        PublicationRequest.WithUri(
+        ExternalRecordRequest.WithUri(
             uri = route.routeParams.pathAndQueries
                 .getAsRawUri(Uri.Host.AtProto)
                 .let(::StandardPublicationUri),
@@ -108,12 +113,12 @@ private val RequestTrie = trieOf(
     },
 )
 
-internal val Route.publicationRequest: PublicationRequest
+internal val Route.externalRecordRequest: ExternalRecordRequest
     get() = checkNotNull(RequestTrie[this]).invoke(this)
 
 @BindingContainer
 @ContributesTo(NavigationScope::class)
-object StandardPublicationNavigationBindings {
+object ExternalRecordNavigationBindings {
 
     @Provides
     @IntoMap
@@ -136,13 +141,13 @@ object StandardPublicationNavigationBindings {
 
 @BindingContainer
 @ContributesTo(AppScope::class)
-object StandardPublicationBindings {
+object ExternalRecordBindings {
 
     @Provides
     @IntoMap
-    @ClassKey(StandardPublicationStateHolder::class)
+    @ClassKey(ExternalRecordStateHolder::class)
     fun provideRouteStateHolderInitializer(
-        initializer: StandardPublicationViewModelInitializer,
+        initializer: ExternalRecordViewModelInitializer,
     ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
@@ -180,7 +185,7 @@ object StandardPublicationBindings {
         },
         render = { route ->
             val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder = paneScaffoldState.retainRouteStateHolder<StandardPublicationStateHolder>(
+            val stateHolder = paneScaffoldState.retainRouteStateHolder<ExternalRecordStateHolder>(
                 route = routeParser.hydrate(route),
             )
             val state = stateHolder.produceStateWithLifecycle()
@@ -195,11 +200,14 @@ object StandardPublicationBindings {
                 topBar = {
                     PoppableDestinationTopAppBar(
                         title = {
-                            PublicationTitle(
-                                paneTransitionScope = this,
-                                sharedElementPrefix = state.sharedElementPrefix,
-                                publication = state.publication,
-                            )
+                            when (val record = state.record) {
+                                is StandardPublication -> PublicationTitle(
+                                    paneTransitionScope = this,
+                                    sharedElementPrefix = state.sharedElementPrefix,
+                                    publication = record,
+                                )
+                                else -> Unit
+                            }
                         },
                         actions = {
                             PaneActions(
@@ -222,7 +230,7 @@ object StandardPublicationBindings {
                     )
                 },
                 content = {
-                    StandardPublicationScreen(
+                    ExternalRecordScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = stateHolder.accept,
