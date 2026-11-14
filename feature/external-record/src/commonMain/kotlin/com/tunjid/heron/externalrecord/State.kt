@@ -14,15 +14,17 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.standard.publication
+package com.tunjid.heron.externalrecord
 
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.repository.records.StandardPublicationDocumentsQuery
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.model
@@ -45,9 +47,9 @@ interface State {
     data class Immutable(
         val sharedElementPrefix: String? = null,
         @Transient
-        val publication: StandardPublication? = null,
+        val record: Record.Embeddable.External? = null,
         @Transient
-        val documentsTilingStateHolder: DocumentsStateHolder? = null,
+        val stateHolders: List<ExternalRecordStateHolders> = emptyList(),
         @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
@@ -56,17 +58,37 @@ interface State {
         operator fun invoke(
             route: Route,
         ): Immutable = Immutable(
-            publication = route.model<StandardPublication>(),
+            record = route.model<StandardPublication>(),
             sharedElementPrefix = route.sharedElementPrefix,
         )
     }
 }
 
-val State.isRefreshing: Boolean
-    get() = documentsTilingStateHolder
-        ?.state
-        ?.tilingData
-        ?.status is TilingState.Status.Refreshing
+@Stable
+sealed class ExternalRecordStateHolders {
+
+    @Stable
+    class Documents(
+        val mutator: DocumentsStateHolder,
+    ) : ExternalRecordStateHolders(),
+        DocumentsStateHolder by mutator
+
+    val key
+        get() = when (this) {
+            is Documents -> "Documents"
+        }
+
+    val isRefreshing: Boolean
+        get() = when (this) {
+            is Documents -> state.isRefreshing
+        }
+
+    fun refresh() = when (this) {
+        is Documents -> accept(
+            TilingState.Action.Refresh,
+        )
+    }
+}
 
 typealias DocumentsStateHolder = ActionSuspendingStateMutator<TilingState.Action, DocumentsTilingState>
 

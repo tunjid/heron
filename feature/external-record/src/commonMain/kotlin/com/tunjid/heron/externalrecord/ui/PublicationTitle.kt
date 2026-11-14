@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.standard.publication.ui
+package com.tunjid.heron.externalrecord.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,8 +44,8 @@ import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.rememberLatchedState
-import heron.feature.standard_publication.generated.resources.Res
-import heron.feature.standard_publication.generated.resources.publication_publisher
+import heron.feature.external_record.generated.resources.Res
+import heron.feature.external_record.generated.resources.publication_publisher
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

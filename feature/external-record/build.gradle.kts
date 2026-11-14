@@ -21,7 +21,7 @@ plugins {
 }
 kotlin {
     androidLibrary {
-        namespace = "com.tunjid.heron.feature.standard.publication"
+        namespace = "com.tunjid.heron.feature.externalrecord"
     }
 }
 
