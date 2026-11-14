@@ -59,6 +59,38 @@ class ExternalRecordLinksTest {
     }
 
     @Test
+    fun smokeSignalUrl_byAuthor_mapsToDidEventUri() {
+        assertEquals(
+            listOf(AuthorEventUri),
+            postView(link = "https://smokesignal.events/bjoernsta.de/3myx2khkx424z").externalRecordUris(),
+        )
+    }
+
+    @Test
+    fun smokeSignalUrl_keepsTheUrlsAuthority() {
+        assertEquals(
+            EventUri("at://atproto.la/community.lexicon.calendar.event/3my6c4jsjrsgv"),
+            "https://smokesignal.events/atproto.la/3my6c4jsjrsgv/?ref=bsky".externalRecordUriOrNull(),
+        )
+    }
+
+    @Test
+    fun blackskyUrl_byAuthor_mapsToDidEventUri() {
+        assertEquals(
+            listOf(AuthorEventUri),
+            postView(link = "https://blacksky.community/event/did:plc:author/3myx2khkx424z").externalRecordUris(),
+        )
+    }
+
+    @Test
+    fun blackskyUrl_keepsTheUrlsAuthority() {
+        assertEquals(
+            EventUri("at://did:plc:omztwr5mc3yicovehg5kdbgs/community.lexicon.calendar.event/3n2c3o7p54k2u"),
+            "https://blacksky.community/event/did:plc:omztwr5mc3yicovehg5kdbgs/3n2c3o7p54k2u#top".externalRecordUriOrNull(),
+        )
+    }
+
+    @Test
     fun handleUrl_byMentionedProfile_mapsToMentionedDid() {
         val text = "Going to @organiser.bsky.social's event 🎉"
         val start = "Going to ".encodeToByteArray().size
@@ -144,6 +176,12 @@ class ExternalRecordLinksTest {
             "https://atmo.rsvp/p/bjoernsta.de/x/3myx2khkx424z",
             "https://atmo.rsvp/p/bjoernsta.de/e/3myx2khkx424z/rsvps",
             "https://example.com/p/bjoernsta.de/e/3myx2khkx424z",
+            "https://smokesignal.events/bjoernsta.de",
+            "https://smokesignal.events/settings/3myx2khkx424z",
+            "https://smokesignal.events/bjoernsta.de/3myx2khkx424z/edit",
+            "https://blacksky.community/event/did:plc:author",
+            "https://blacksky.community/event/did:plc:author/",
+            "https://blacksky.community/profile/did:plc:author/3myx2khkx424z",
         ).forEach { link ->
             assertEquals(emptyList(), postView(link = link).externalRecordUris(), link)
         }
