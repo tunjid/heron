@@ -19,8 +19,10 @@ package com.tunjid.heron.data.utilities.atmosphereintegration
 import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
+import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.RsvpUri
 import com.tunjid.heron.data.core.types.ScrobbleUri
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
@@ -38,6 +40,11 @@ internal val SupportedAtmosphereApps: List<AtmosphereApp> = listOf(
         webpage = GenericUri("https://rocksky.app"),
         logo = ImageUri("https://rocksky.app/favicon.ico"),
     ),
+    AtmosphereApp(
+        id = AtmosphereApp.EventsId,
+        webpage = GenericUri("https://atmo.rsvp"),
+        logo = ImageUri("https://atmo.rsvp/favicon.ico"),
+    ),
 )
 
 internal val AtmosphereAppNsids: Map<String, List<String>> = mapOf(
@@ -50,5 +57,9 @@ internal val AtmosphereAppNsids: Map<String, List<String>> = mapOf(
         TrackUri.NAMESPACE,
         AlbumUri.NAMESPACE,
         ArtistUri.NAMESPACE,
+    ),
+    AtmosphereApp.EventsId to listOf(
+        EventUri.NAMESPACE,
+        RsvpUri.NAMESPACE,
     ),
 )

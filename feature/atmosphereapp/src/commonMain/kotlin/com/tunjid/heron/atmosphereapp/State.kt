@@ -20,6 +20,7 @@ import androidx.compose.runtime.Stable
 import com.tunjid.heron.atmosphereapp.AppScreenStateHolders.Records
 import com.tunjid.heron.atmosphereapp.di.profileHandleOrId
 import com.tunjid.heron.data.core.models.AtmosphereApp
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.RockskyAlbum
@@ -31,8 +32,10 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
+import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RsvpUri
 import com.tunjid.heron.data.core.types.ScrobbleUri
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
@@ -141,6 +144,22 @@ sealed class AppScreenStateHolders {
         ) : Rocksky<RockskyScrobble>(mutator)
     }
 
+    @Stable
+    sealed class Events(
+        mutator: RecordStateHolder<Event>,
+    ) : Records<Event>(mutator) {
+
+        @Stable
+        class Created(
+            mutator: RecordStateHolder<Event>,
+        ) : Events(mutator)
+
+        @Stable
+        class Rsvped(
+            mutator: RecordStateHolder<Event>,
+        ) : Events(mutator)
+    }
+
     val key: String
         get() = when (this) {
             is StandardSite.Documents -> StandardDocumentUri.NAMESPACE
@@ -149,6 +168,8 @@ sealed class AppScreenStateHolders {
             is Rocksky.Tracks -> TrackUri.NAMESPACE
             is Rocksky.Artists -> ArtistUri.NAMESPACE
             is Rocksky.Scrobbles -> ScrobbleUri.NAMESPACE
+            is Events.Created -> EventUri.NAMESPACE
+            is Events.Rsvped -> RsvpUri.NAMESPACE
         }
 
     fun refresh() = (this as Records<*>).accept(TilingState.Action.Refresh)
