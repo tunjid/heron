@@ -75,7 +75,6 @@ import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
@@ -106,7 +105,6 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.core.types.takeIfIs
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.media.images.AsyncImage
@@ -147,8 +145,6 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.profile.verificationBadge
 import com.tunjid.heron.timeline.ui.record.RecordList
-import com.tunjid.heron.timeline.ui.standard.Document
-import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelText
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
@@ -188,7 +184,6 @@ import com.tunjid.heron.ui.scaffold.navigation.profileFollowsDestination
 import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.searchProfilePostsDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
-import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
@@ -528,97 +523,6 @@ internal fun ProfileScreen(
                                     onListStatusUpdated = { update ->
                                         if (paneScaffoldState.isSignedOut) signInPopUpState.show()
                                         else actions(Action.UpdatePreferences(update))
-                                    },
-                                )
-                            },
-                        )
-
-                        is ProfileScreenStateHolders.Records.Documents -> RecordList(
-                            collectionStateHolder = stateHolder,
-                            prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                            itemKey = { it.uri.uri },
-                            itemContent = { document ->
-                                val uriHandler = LocalUriHandler.current
-                                Document(
-                                    modifier = Modifier
-                                        .fillParentMaxWidth()
-                                        .clip(RecordShape)
-                                        .animateItem()
-                                        .clickable {
-                                            runCatching {
-                                                document.link
-                                                    ?.takeIfIs(Uri.Host.Https)
-                                                    ?.let(uriHandler::openUri)
-                                            }
-                                        }
-                                        .recordPadding(),
-                                    paneTransitionScope = paneScaffoldState,
-                                    sharedElementPrefix = document.uri.uri,
-                                    document = document,
-                                    onPublicationClicked = {
-                                        actions(
-                                            Action.Navigate.To(
-                                                standardPublicationDestination(
-                                                    publication = it,
-                                                    sharedElementPrefix = document.uri.uri,
-                                                ),
-                                            ),
-                                        )
-                                    },
-                                    onSubscriptionToggled = { publication, _ ->
-                                        actions(
-                                            Action.RecordInteraction(
-                                                interaction = PostAction.OfPublicationSubscription(
-                                                    publication = publication,
-                                                ),
-                                            ),
-                                        )
-                                    },
-                                    onRecommendationToggled = {
-                                        actions(
-                                            Action.RecordInteraction(
-                                                interaction = PostAction.OfDocumentRecommendation(
-                                                    document = it,
-                                                ),
-                                            ),
-                                        )
-                                    },
-                                )
-                            },
-                        )
-                        is ProfileScreenStateHolders.Records.Publications -> RecordList(
-                            collectionStateHolder = stateHolder,
-                            prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                            itemKey = { it.uri.uri },
-                            itemContent = { publication ->
-                                Publication(
-                                    modifier = Modifier
-                                        .fillParentMaxWidth()
-                                        .animateItem()
-                                        .shapedClickable {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    pathDestination(
-                                                        path = publication.uri.path,
-                                                        models = listOf(publication),
-                                                        sharedElementPrefix = publication.uri.uri,
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    ),
-                                                ),
-                                            )
-                                        }
-                                        .recordPadding(),
-                                    paneTransitionScope = paneScaffoldState,
-                                    sharedElementPrefix = publication.uri.uri,
-                                    publication = publication,
-                                    onSubscriptionToggled = { publication, _ ->
-                                        actions(
-                                            Action.RecordInteraction(
-                                                interaction = PostAction.OfPublicationSubscription(
-                                                    publication = publication,
-                                                ),
-                                            ),
-                                        )
                                     },
                                 )
                             },

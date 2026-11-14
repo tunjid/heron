@@ -23,6 +23,9 @@ import com.tunjid.heron.atmosphereapp.Action
 import com.tunjid.heron.atmosphereapp.AtmosphereAppScreen
 import com.tunjid.heron.atmosphereapp.AtmosphereAppStateHolder
 import com.tunjid.heron.atmosphereapp.AtmosphereAppViewModelInitializer
+import com.tunjid.heron.atmosphereapp.State
+import com.tunjid.heron.atmosphereapp.ui.WritingFab
+import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -149,6 +152,12 @@ internal fun Route(
                 onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
             )
         },
+        floatingActionButton = {
+            if (state.canWrite) WritingFab(
+                fabExpanded = isBottomNavOffsetNearOrigin,
+                profileHandle = state.profile?.handle,
+            )
+        },
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
@@ -166,3 +175,6 @@ internal fun Route(
         },
     )
 }
+
+private val State.canWrite: Boolean
+    get() = isSignedInProfile && app?.id == AtmosphereApp.StandardSiteId

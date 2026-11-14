@@ -163,6 +163,7 @@ private fun launchProfileLoadMutations(
     }
         .distinctUntilChanged()
         .launchedCollectLatest { (resolvedProfileId, isSignedInProfile) ->
+            state.isSignedInProfile = isSignedInProfile
             val keysToHolders = state.stateHolders
                 .associateBy(AppScreenStateHolders::key)
 

@@ -1010,12 +1010,6 @@ private fun ProfileTab.asNetworkTab(): PutTabsRequestItemUnion = when (this) {
     ProfileTab.Bluesky.StarterPacks -> PutTabsRequestItemUnion.CollectionTab(
         value = TabsCollectionTab(collection = TabsCollectionTabCollection.AppBskyGraphStarterpack),
     )
-    ProfileTab.StandardSite.Documents -> PutTabsRequestItemUnion.CollectionTab(
-        value = TabsCollectionTab(collection = TabsCollectionTabCollection.SiteStandardDocument),
-    )
-    ProfileTab.StandardSite.Publications -> PutTabsRequestItemUnion.CollectionTab(
-        value = TabsCollectionTab(collection = TabsCollectionTabCollection.SiteStandardPublication),
-    )
 }
 
 private class StarterPackFollowWrite(

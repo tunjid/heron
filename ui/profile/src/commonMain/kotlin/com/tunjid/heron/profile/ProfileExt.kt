@@ -28,13 +28,11 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ProfileTab
 import com.tunjid.heron.ui.UiTokens
 import heron.ui.profile.generated.resources.Res
-import heron.ui.profile.generated.resources.tab_documents
 import heron.ui.profile.generated.resources.tab_feeds
 import heron.ui.profile.generated.resources.tab_likes
 import heron.ui.profile.generated.resources.tab_lists
 import heron.ui.profile.generated.resources.tab_media
 import heron.ui.profile.generated.resources.tab_posts
-import heron.ui.profile.generated.resources.tab_publications
 import heron.ui.profile.generated.resources.tab_replies
 import heron.ui.profile.generated.resources.tab_starter_packs
 import heron.ui.profile.generated.resources.tab_video
@@ -58,8 +56,6 @@ val ProfileTab.stringResource
         is ProfileTab.Bluesky.FeedGenerators -> Res.string.tab_feeds
         is ProfileTab.Bluesky.Lists -> Res.string.tab_lists
         ProfileTab.Bluesky.StarterPacks -> Res.string.tab_starter_packs
-        ProfileTab.StandardSite.Documents -> Res.string.tab_documents
-        ProfileTab.StandardSite.Publications -> Res.string.tab_publications
     }
 
 fun String.withProfileBannerSharedElementPrefix() = "banner-$this"
