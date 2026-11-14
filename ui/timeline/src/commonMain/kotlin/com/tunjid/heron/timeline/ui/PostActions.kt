@@ -25,10 +25,12 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Rsvp
+import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.recommendationWritable
 import com.tunjid.heron.data.utilities.writequeue.rsvpWritable
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.timeline.ui.post.PostMetadata
@@ -103,11 +105,16 @@ sealed interface PostAction {
         val event: Event,
         val status: Rsvp.Status?,
     ) : RecordInteraction
+
+    data class OfDocumentRecommendation(
+        val document: StandardDocument,
+    ) : RecordInteraction
 }
 
 fun PostAction.RecordInteraction.toWritable(): Writable? = when (this) {
     is PostAction.OfPublicationSubscription -> publication.toSubscriptionWritable()
     is PostAction.OfRsvp -> event.rsvpWritable(status)
+    is PostAction.OfDocumentRecommendation -> document.recommendationWritable()
 }
 
 @Stable

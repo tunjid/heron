@@ -181,6 +181,15 @@ internal fun AtmosphereAppScreen(
                                             ),
                                         )
                                     },
+                                    onRecommendationToggled = {
+                                        actions(
+                                            Action.RecordInteraction(
+                                                interaction = PostAction.OfDocumentRecommendation(
+                                                    document = it,
+                                                ),
+                                            ),
+                                        )
+                                    },
                                 )
                             },
                         )

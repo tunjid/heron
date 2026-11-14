@@ -48,6 +48,7 @@ import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
@@ -184,6 +185,7 @@ internal fun StandardPublicationScreen(
                     Documents(
                         holder = holder,
                         paneScaffoldState = paneScaffoldState,
+                        actions = actions,
                     )
                 }
             }
@@ -195,6 +197,7 @@ internal fun StandardPublicationScreen(
 private fun Documents(
     holder: DocumentsStateHolder,
     paneScaffoldState: PaneScaffoldState,
+    actions: (Action) -> Unit,
 ) {
     val state = holder.produceStateWithLifecycle()
     val gridState = rememberLazyStaggeredGridState()
@@ -238,6 +241,15 @@ private fun Documents(
                     document = document,
                     onPublicationClicked = null,
                     onSubscriptionToggled = null,
+                    onRecommendationToggled = {
+                        actions(
+                            Action.RecordInteraction(
+                                interaction = PostAction.OfDocumentRecommendation(
+                                    document = it,
+                                ),
+                            ),
+                        )
+                    },
                 )
             },
         )

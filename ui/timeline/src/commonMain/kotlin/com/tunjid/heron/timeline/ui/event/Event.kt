@@ -22,9 +22,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -55,7 +53,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.Rsvp
-import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
@@ -96,7 +93,6 @@ fun Event(
     paneTransitionScope: PaneTransitionScope,
     sharedElementPrefix: String,
     event: Event,
-    image: ImageUri?,
     isBlurred: Boolean,
     onRsvpClicked: (Event, Rsvp.Status?) -> Unit,
 ) = with(paneTransitionScope) {
@@ -109,10 +105,6 @@ fun Event(
         verticalArrangement = spacedBy(8.dp),
     ) {
         EventInfo(
-            image = event.thumbnail ?: image,
-            imageAspectRatio = event.thumbnailAspectRatio
-                ?.takeIf { event.thumbnail != null }
-                ?: 1f,
             isBlurred = isBlurred,
             event = event,
             sharedElementPrefix = sharedElementPrefix,
@@ -141,8 +133,6 @@ fun Event(
 
 @Composable
 private fun PaneTransitionScope.EventInfo(
-    image: ImageUri?,
-    imageAspectRatio: Float,
     isBlurred: Boolean,
     event: Event,
     sharedElementPrefix: String,
@@ -152,12 +142,11 @@ private fun PaneTransitionScope.EventInfo(
     Row(
         horizontalArrangement = spacedBy(12.dp),
     ) {
-        if (image != null) PaneStickySharedElement(
+        PaneStickySharedElement(
             boundsTransform = sharedElementBoundsTransform,
             clipInOverlayDuringTransition = paneOverlayClip,
             modifier = Modifier
-                .height(88.dp)
-                .aspectRatio(imageAspectRatio)
+                .size(88.dp)
                 .then(
                     if (isBlurred) Modifier.sensitiveContentBlur(EventImageShape)
                     else Modifier,
@@ -171,9 +160,12 @@ private fun PaneTransitionScope.EventInfo(
             AsyncImage(
                 modifier = Modifier
                     .fillParentAxisIfFixedOrWrap(),
-                args = remember(image, event.name) {
+                args = remember(
+                    event.thumbnail,
+                    event.name,
+                ) {
                     ImageArgs(
-                        url = image.uri,
+                        url = event.thumbnail?.uri,
                         contentDescription = event.name,
                         contentScale = ContentScale.Crop,
                         shape = EventImageShape,

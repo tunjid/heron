@@ -141,6 +141,8 @@
     <string name="view_labeler">View Labeler</string>
     <string name="open_starter_pack">Open pack</string>
     <string name="standard_site_published_in">Published in %1$s</string>
+    <string name="standard_document_recommend">Recommend</string>
+    <string name="standard_document_remove_recommendation">Remove recommendation</string>
     <string name="event_rsvp_going">Going</string>
     <string name="event_rsvp_interested">Interested</string>
     <string name="event_rsvp_not_going">Not going</string>

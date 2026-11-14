@@ -18,10 +18,13 @@ package com.tunjid.heron.timeline.ui.standard
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
@@ -80,21 +83,25 @@ fun Publication(
         action = {
             val subscribed = publication.subscription != null
             val latchedSubscribedState = rememberLatchedState(subscribed)
-            IconButton(
-                onClick = {
-                    latchedSubscribedState.latch(!subscribed)
-                    onSubscriptionToggled(
-                        publication,
-                        publication.subscription,
-                    )
-                },
-                content = {
-                    PublicationSubscriptionIcon(
-                        subscribed = latchedSubscribedState.value,
-                        iconSize = 24.dp,
-                    )
-                },
-            )
+            CompositionLocalProvider(
+                LocalMinimumInteractiveComponentSize provides Dp.Unspecified,
+            ) {
+                IconButton(
+                    onClick = {
+                        latchedSubscribedState.latch(!subscribed)
+                        onSubscriptionToggled(
+                            publication,
+                            publication.subscription,
+                        )
+                    },
+                    content = {
+                        PublicationSubscriptionIcon(
+                            subscribed = latchedSubscribedState.value,
+                            iconSize = 24.dp,
+                        )
+                    },
+                )
+            }
         },
     )
 }
