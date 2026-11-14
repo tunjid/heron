@@ -26,6 +26,7 @@ import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.EventId
 import com.tunjid.heron.data.core.types.EventUri
+import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlin.time.Instant
 
@@ -65,6 +66,9 @@ data class EventEntity(
     val goingCount: Long,
     val interestedCount: Long,
     val notGoingCount: Long,
+    val thumbnail: ImageUri?,
+    val thumbnailWidth: Long?,
+    val thumbnailHeight: Long?,
 )
 
 data class PopulatedEventEntity(
@@ -98,6 +102,12 @@ fun PopulatedEventEntity.asExternalModel() = Event(
     goingCount = entity.goingCount,
     interestedCount = entity.interestedCount,
     notGoingCount = entity.notGoingCount,
+    thumbnail = entity.thumbnail,
+    thumbnailAspectRatio = entity.thumbnailWidth?.let { width ->
+        entity.thumbnailHeight?.let { height ->
+            if (width > 0 && height > 0) width.toFloat() / height else null
+        }
+    },
     rsvp = rsvp?.asExternalModel(),
 )
 

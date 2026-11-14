@@ -20,6 +20,7 @@ import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.EventId
 import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ImageUri
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
@@ -41,6 +42,8 @@ data class Event(
     val goingCount: Long,
     val interestedCount: Long,
     val notGoingCount: Long,
+    val thumbnail: ImageUri?,
+    val thumbnailAspectRatio: Float?,
     val rsvp: Rsvp?,
 ) : Record.Embeddable.External {
     override val reference: Record.Reference =

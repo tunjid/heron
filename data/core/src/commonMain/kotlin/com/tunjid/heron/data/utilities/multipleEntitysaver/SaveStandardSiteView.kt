@@ -252,16 +252,12 @@ internal fun MultipleEntitySaver.add(
 
 private fun Blob?.imageUri(
     profileId: ProfileId,
-    pdsUrl: String?,
-): ImageUri? {
-    if (pdsUrl == null) return null
-    return when (val icon = this) {
-        is Blob.LegacyBlob -> null
-        is Blob.StandardBlob -> ImageUri(
-            "$pdsUrl/xrpc/com.atproto.sync.getBlob?did=${profileId.id}&cid=${icon.ref.link.cid}",
-        )
-        null -> null
-    }
+): ImageUri? = when (this) {
+    is Blob.StandardBlob -> ref.link.cid
+    is Blob.LegacyBlob -> cid
+    null -> null
+}?.let { cid ->
+    ImageUri("https://cdn.bsky.app/img/feed_thumbnail/plain/${profileId.id}/$cid@jpeg")
 }
 
 private fun stubPublicationEntity(
@@ -341,7 +337,6 @@ internal fun Document.asExternalModel(
     uri: StandardDocumentUri,
     cid: StandardDocumentId?,
     publication: StandardPublication?,
-    pdsUrl: String,
 ) = StandardDocument(
     uri = uri,
     cid = cid,
@@ -353,9 +348,8 @@ internal fun Document.asExternalModel(
     site = site.uri,
     publishedAt = publishedAt,
     updatedAt = updatedAt,
-    coverImage = coverImage?.imageUri(
+    coverImage = coverImage.imageUri(
         profileId = uri.profileId(),
-        pdsUrl = pdsUrl,
     ),
     bskyPostRef = bskyPostRef?.let { ref ->
         Record.Reference(
