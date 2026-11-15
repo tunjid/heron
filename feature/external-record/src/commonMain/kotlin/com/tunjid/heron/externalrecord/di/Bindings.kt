@@ -18,8 +18,10 @@ package com.tunjid.heron.externalrecord.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.StandardPublicationUri
@@ -29,6 +31,7 @@ import com.tunjid.heron.externalrecord.Action
 import com.tunjid.heron.externalrecord.ExternalRecordScreen
 import com.tunjid.heron.externalrecord.ExternalRecordStateHolder
 import com.tunjid.heron.externalrecord.ExternalRecordViewModelInitializer
+import com.tunjid.heron.externalrecord.ui.EventTitle
 import com.tunjid.heron.externalrecord.ui.PaneActions
 import com.tunjid.heron.externalrecord.ui.PublicationTitle
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
@@ -68,6 +71,8 @@ private const val StandardPublicationRoutePattern =
     "/profile/{profileId}/standard/publication/{publicationUriSuffix}"
 private const val StandardPublicationUriRoutePattern =
     "/{did}/site.standard.publication/{publicationUriSuffix}"
+private const val EventUriRoutePattern =
+    "/{did}/community.lexicon.calendar.event/{eventUriSuffix}"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -111,6 +116,13 @@ private val RequestTrie = trieOf(
                 .let(::StandardPublicationUri),
         )
     },
+    EventUriRoutePattern to { route: Route ->
+        ExternalRecordRequest.WithUri(
+            uri = route.routeParams.pathAndQueries
+                .getAsRawUri(Uri.Host.AtProto)
+                .let(::EventUri),
+        )
+    },
 )
 
 internal val Route.externalRecordRequest: ExternalRecordRequest
@@ -135,6 +147,15 @@ object ExternalRecordNavigationBindings {
     fun provideUriRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = StandardPublicationUriRoutePattern,
+            routeMapper = ::createRoute,
+        )
+
+    @Provides
+    @IntoMap
+    @StringKey(EventUriRoutePattern)
+    fun provideEventUriRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = EventUriRoutePattern,
             routeMapper = ::createRoute,
         )
 }
@@ -165,6 +186,17 @@ object ExternalRecordBindings {
     @IntoMap
     @StringKey(StandardPublicationUriRoutePattern)
     fun provideUriPaneEntry(
+        routeParser: RouteParser,
+        navigationContentTransformer: NavigationContentTransformer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        navigationContentTransformer = navigationContentTransformer,
+    )
+
+    @Provides
+    @IntoMap
+    @StringKey(EventUriRoutePattern)
+    fun provideEventUriPaneEntry(
         routeParser: RouteParser,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
@@ -205,6 +237,9 @@ object ExternalRecordBindings {
                                     paneTransitionScope = this,
                                     sharedElementPrefix = state.sharedElementPrefix,
                                     publication = record,
+                                )
+                                is Event -> EventTitle(
+                                    event = record,
                                 )
                                 else -> Unit
                             }

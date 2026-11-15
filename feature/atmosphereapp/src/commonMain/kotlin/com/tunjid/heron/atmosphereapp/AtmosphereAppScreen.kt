@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastRoundToInt
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.heron.atmosphereapp.ui.AtmosphereAppHeader
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.link
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
@@ -59,6 +60,7 @@ import com.tunjid.heron.ui.pullToRefreshIndicatorOffset
 import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
+import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
@@ -157,14 +159,19 @@ internal fun AtmosphereAppScreen(
                                         .fillMaxWidth()
                                         .animateItem()
                                         .shapedClickable {
-                                            uriHandler.openAtmoRsvpLink(
-                                                recordUri = event.uri,
+                                            actions(
+                                                Action.Navigate.To(
+                                                    recordDestination(
+                                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                                        sharedElementPrefix = stateHolder.sharedElementPrefix(event),
+                                                        record = event,
+                                                    ),
+                                                ),
                                             )
                                         }
                                         .padding(8.dp),
                                     paneTransitionScope = paneScaffoldState,
-                                    // The same event may show in more than one tab
-                                    sharedElementPrefix = "${stateHolder.key}-${event.uri.uri}",
+                                    sharedElementPrefix = stateHolder.sharedElementPrefix(event),
                                     event = event,
                                     isBlurred = false,
                                     onRsvpClicked = { event, status ->
@@ -198,14 +205,14 @@ internal fun AtmosphereAppScreen(
                                         }
                                         .padding(8.dp),
                                     paneTransitionScope = paneScaffoldState,
-                                    sharedElementPrefix = document.uri.uri,
+                                    sharedElementPrefix = stateHolder.sharedElementPrefix(document),
                                     document = document,
                                     onPublicationClicked = {
                                         actions(
                                             Action.Navigate.To(
                                                 standardPublicationDestination(
                                                     publication = it,
-                                                    sharedElementPrefix = document.uri.uri,
+                                                    sharedElementPrefix = stateHolder.sharedElementPrefix(document),
                                                 ),
                                             ),
                                         )
@@ -247,14 +254,14 @@ internal fun AtmosphereAppScreen(
                                                     pathDestination(
                                                         path = publication.uri.path,
                                                         models = listOf(publication),
-                                                        sharedElementPrefix = publication.uri.uri,
+                                                        sharedElementPrefix = stateHolder.sharedElementPrefix(publication),
                                                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                     ),
                                                 ),
                                             )
                                         },
                                     paneTransitionScope = paneScaffoldState,
-                                    sharedElementPrefix = publication.uri.uri,
+                                    sharedElementPrefix = stateHolder.sharedElementPrefix(publication),
                                     publication = publication,
                                     onSubscriptionToggled = { publication, _ ->
                                         actions(
@@ -285,7 +292,7 @@ internal fun AtmosphereAppScreen(
                                         .padding(8.dp)
                                         .animateItem(),
                                     paneTransitionScope = paneScaffoldState,
-                                    sharedElementPrefix = AtmosphereScreenSharedElementPrefix,
+                                    sharedElementPrefix = stateHolder.sharedElementPrefix(album),
                                     album = album,
                                     onMusicServiceLinkClicked = { url ->
                                         runCatching {
@@ -312,7 +319,7 @@ internal fun AtmosphereAppScreen(
                                         .padding(8.dp)
                                         .animateItem(),
                                     paneTransitionScope = paneScaffoldState,
-                                    sharedElementPrefix = AtmosphereScreenSharedElementPrefix,
+                                    sharedElementPrefix = stateHolder.sharedElementPrefix(track),
                                     track = track,
                                 )
                             },
@@ -334,7 +341,7 @@ internal fun AtmosphereAppScreen(
                                         .padding(8.dp)
                                         .animateItem(),
                                     paneTransitionScope = paneScaffoldState,
-                                    sharedElementPrefix = AtmosphereScreenSharedElementPrefix,
+                                    sharedElementPrefix = stateHolder.sharedElementPrefix(artist),
                                     artist = artist,
                                 )
                             },
@@ -356,7 +363,7 @@ internal fun AtmosphereAppScreen(
                                         .padding(8.dp)
                                         .animateItem(),
                                     paneTransitionScope = paneScaffoldState,
-                                    sharedElementPrefix = AtmosphereScreenSharedElementPrefix,
+                                    sharedElementPrefix = stateHolder.sharedElementPrefix(scrobble),
                                     scrobble = scrobble,
                                 )
                             },
@@ -374,6 +381,10 @@ internal fun AtmosphereAppScreen(
         }
     }
 }
+
+private fun AppScreenStateHolders.sharedElementPrefix(
+    record: Record,
+): String = "$key-${record.reference.uri.uri}"
 
 private fun UriHandler.openRockskyLink(
     recordUri: RecordUri,
@@ -395,5 +406,3 @@ private fun UriHandler.openAtmoRsvpLink(
         )
     }
 }
-
-private const val AtmosphereScreenSharedElementPrefix = "AtmosphereScreenSharedElementPrefix"

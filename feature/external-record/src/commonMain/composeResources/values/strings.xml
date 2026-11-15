@@ -17,4 +17,10 @@
 <resources>
     <string name="publication">Publication</string>
     <string name="publication_publisher">Published by %1$s</string>
+    <string name="event_host">Hosted by %1$s</string>
+    <string name="event_going">Going</string>
+    <string name="event_interested">Interested</string>
+    <string name="event_not_going">Not going</string>
+    <string name="event_comments">Comments</string>
+    <string name="see_more">See more</string>
 </resources>
