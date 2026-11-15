@@ -18,6 +18,7 @@ import com.tunjid.heron.ui.icons.automirrored.VolumeUp
 import com.tunjid.heron.ui.icons.regular.Block
 import com.tunjid.heron.ui.icons.regular.Bookmark
 import com.tunjid.heron.ui.icons.regular.BookmarkRemove
+import com.tunjid.heron.ui.icons.regular.CalendarMonth
 import com.tunjid.heron.ui.icons.regular.Check
 import com.tunjid.heron.ui.icons.regular.Delete
 import com.tunjid.heron.ui.icons.regular.Drafts
@@ -36,6 +37,7 @@ import com.tunjid.heron.ui.icons.regular.Repeat
 import com.tunjid.heron.ui.icons.regular.Sensors
 import com.tunjid.heron.ui.icons.regular.Shield
 import com.tunjid.heron.ui.icons.regular.Subscriptions
+import com.tunjid.heron.ui.icons.regular.ThumbUp
 import com.tunjid.heron.ui.icons.regular.Tune
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.Memo.Resource
@@ -62,11 +64,13 @@ import heron.ui.timeline.generated.resources.writable_description_muting_profile
 import heron.ui.timeline.generated.resources.writable_description_post_photo
 import heron.ui.timeline.generated.resources.writable_description_post_video
 import heron.ui.timeline.generated.resources.writable_description_reacting_with
+import heron.ui.timeline.generated.resources.writable_description_recommending_document
 import heron.ui.timeline.generated.resources.writable_description_removing_bookmark
 import heron.ui.timeline.generated.resources.writable_description_removing_like
 import heron.ui.timeline.generated.resources.writable_description_removing_reaction
 import heron.ui.timeline.generated.resources.writable_description_removing_repost
 import heron.ui.timeline.generated.resources.writable_description_reposting
+import heron.ui.timeline.generated.resources.writable_description_responding_to_event
 import heron.ui.timeline.generated.resources.writable_description_saving_draft
 import heron.ui.timeline.generated.resources.writable_description_sending_feed_feedback
 import heron.ui.timeline.generated.resources.writable_description_sending_message
@@ -182,6 +186,16 @@ fun Writable.describe(): WritableDescription =
         is Writable.StandardSite.Subscribe -> WritableDescription(
             icon = HeronIcons.Regular.Subscriptions,
             title = Resource(Res.string.writable_description_subscribing_publication),
+            summary = null,
+        )
+        is Writable.StandardSite.Recommend -> WritableDescription(
+            icon = HeronIcons.Regular.ThumbUp,
+            title = Resource(Res.string.writable_description_recommending_document),
+            summary = null,
+        )
+        is Writable.RsvpUpdate -> WritableDescription(
+            icon = HeronIcons.Regular.CalendarMonth,
+            title = Resource(Res.string.writable_description_responding_to_event),
             summary = null,
         )
         is Writable.StandardSite.UpdatePostReference -> when (reference) {

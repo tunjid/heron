@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.AppliedLabels
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
@@ -197,6 +198,7 @@ private fun TaskEmbeddedRecord(
                 document = record,
                 onPublicationClicked = null,
                 onSubscriptionToggled = null,
+                onRecommendationToggled = null,
             )
         }
         is StandardPublication -> OutlinedCard {
@@ -208,6 +210,7 @@ private fun TaskEmbeddedRecord(
                 onSubscriptionToggled = { _, _ -> },
             )
         }
+        is Event -> Unit
     }
 }
 

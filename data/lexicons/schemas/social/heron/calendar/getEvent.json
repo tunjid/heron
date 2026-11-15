@@ -1,0 +1,40 @@
+{
+  "lexicon": 1,
+  "id": "social.heron.calendar.getEvent",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Get a single calendar event with its RSVP counts and the viewer's RSVP.",
+      "parameters": {
+        "type": "params",
+        "required": ["uri"],
+        "properties": {
+          "uri": {
+            "type": "string",
+            "format": "at-uri",
+            "description": "AT URI of the community.lexicon.calendar.event record."
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["event"],
+          "properties": {
+            "event": {
+              "type": "ref",
+              "ref": "social.heron.calendar.defs#eventView"
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "name": "NotFound",
+          "description": "The event does not exist."
+        }
+      ]
+    }
+  }
+}

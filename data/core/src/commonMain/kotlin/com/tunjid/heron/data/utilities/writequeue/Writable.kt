@@ -17,19 +17,24 @@
 package com.tunjid.heron.data.utilities.writequeue
 
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Rsvp
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StandardRecommendation
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.types.DraftId
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.utilities.toOutcome
 import kotlin.time.Instant
@@ -238,6 +243,18 @@ sealed interface Writable {
         }
 
         @Serializable
+        data class Recommend(
+            val create: StandardRecommendation.Create,
+        ) : StandardSite,
+            Writable {
+            override val queueId: String
+                get() = "recommend-standard-document-${create.documentUri}"
+
+            override suspend fun WriteQueue.write(): Outcome =
+                recordRepository.createRecommendation(create)
+        }
+
+        @Serializable
         data class UpdatePostReference(
             val reference: StandardDocument.PostReference,
         ) : StandardSite,
@@ -248,6 +265,17 @@ sealed interface Writable {
             override suspend fun WriteQueue.write(): Outcome =
                 recordRepository.updateDocumentPostRef(reference)
         }
+    }
+
+    @Serializable
+    data class RsvpUpdate(
+        val put: Rsvp.Put,
+    ) : Writable {
+        override val queueId: String
+            get() = "rsvp-event-${put.eventUri}-${put.status}"
+
+        override suspend fun WriteQueue.write(): Outcome =
+            recordRepository.putRsvp(put)
     }
 
     @Serializable
@@ -352,6 +380,37 @@ fun StandardPublication.toSubscriptionWritable(): Writable =
         )
         else -> Writable.RecordDeletion(recordUri = existingSubscription.uri)
     }
+
+fun StandardDocument.recommendationWritable(): Writable =
+    when (val existingRecommendation = recommendation) {
+        null -> Writable.StandardSite.Recommend(
+            create = StandardRecommendation.Create(documentUri = uri),
+        )
+        else -> Writable.RecordDeletion(recordUri = existingRecommendation.uri)
+    }
+
+fun Event.rsvpWritable(
+    status: Rsvp.Status?,
+): Writable? {
+    val existingRsvp = rsvp
+    return when (status) {
+        null -> existingRsvp?.let {
+            Writable.RecordDeletion(recordUri = it.uri)
+        }
+        existingRsvp?.status -> null
+        else -> cid?.let { eventCid ->
+            Writable.RsvpUpdate(
+                put = Rsvp.Put(
+                    eventUri = uri,
+                    eventCid = eventCid,
+                    status = status,
+                    recordKey = existingRsvp?.uri?.recordKey ?: RecordKey.generate(),
+                    previousStatus = existingRsvp?.status,
+                ),
+            )
+        }
+    }
+}
 
 @Serializable
 data class FailedWrite(

@@ -50,7 +50,6 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
@@ -61,6 +60,7 @@ import com.tunjid.heron.search.State
 import com.tunjid.heron.search.isRoot
 import com.tunjid.heron.search.presentationOptions
 import com.tunjid.heron.search.supportsNonPostSearch
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
 import com.tunjid.heron.ui.QuickReturnTabbedLayout
@@ -99,7 +99,7 @@ internal fun GeneralSearchResults(
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (post: Post, sharedElementPrefix: String) -> Unit,
     onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
-    onPublicationSubscriptionToggled: (StandardPublication) -> Unit,
+    onRecordInteraction: (PostAction.RecordInteraction) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator, String) -> Unit,
@@ -220,7 +220,7 @@ internal fun GeneralSearchResults(
                                 onPostSearchResultClicked = onPostSearchResultClicked,
                                 onReplyToPost = onReplyToPost,
                                 onPostRecordClicked = onPostRecordClicked,
-                                onPublicationSubscriptionToggled = onPublicationSubscriptionToggled,
+                                onRecordInteraction = onRecordInteraction,
                                 onMediaClicked = onMediaClicked,
                                 onNavigate = onNavigate,
                                 onMuteAccountClicked = onMuteAccountClicked,

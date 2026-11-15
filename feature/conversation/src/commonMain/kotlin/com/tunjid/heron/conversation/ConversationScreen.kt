@@ -629,8 +629,8 @@ private fun MessageRecord(
                     is PostAction.OfInteraction -> actions(
                         Action.SendPostInteraction(action.interaction),
                     )
-                    is PostAction.OfPublicationSubscription -> actions(
-                        Action.TogglePublicationSubscription(action.publication),
+                    is PostAction.RecordInteraction -> actions(
+                        Action.RecordInteraction(action),
                     )
                     is PostAction.Options -> Unit
                 }

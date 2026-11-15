@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.AppliedLabels
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
@@ -32,6 +33,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
@@ -124,11 +126,7 @@ fun EmbeddedRecord(
                         ),
                     )
                 },
-                onSubscriptionToggled = { publication ->
-                    postActions.onPostAction(
-                        PostAction.OfPublicationSubscription(publication = publication),
-                    )
-                },
+                onRecordInteraction = postActions::onPostAction,
             )
             is FeedGenerator -> FeedGenerator(
                 modifier = NonPostRecordModifier,
@@ -193,6 +191,11 @@ fun EmbeddableRecordUri.shareUri(): GenericUri =
             // Standard site records are shared via their canonical AT URI for now.
             is StandardDocumentUri -> uri
             is StandardPublicationUri -> uri
+            // atmo.rsvp links open anywhere, and Heron resolves them back to the event.
+            is EventUri -> Event.atmoRsvpLink(
+                authorId = profileId(),
+                recordKey = recordKey,
+            ).uri
         },
     )
 
@@ -212,6 +215,7 @@ fun EmbeddableRecordUri.collectionShape() = when (this) {
     is StarterPackUri -> StarterPackCollectionShape
     is StandardDocumentUri -> DocumentCollectionShape
     is StandardPublicationUri -> DocumentCollectionShape
+    is EventUri -> DocumentCollectionShape
 }
 
 // A stone that swells to one side, like one left in a cove by the tide.
@@ -309,7 +313,7 @@ internal val StarterPackCollectionShape by lazy {
 }
 
 internal val DocumentCollectionShape by lazy {
-    PolygonShape.roundedRectangle(percent = 0.6f)
+    PolygonShape.roundedRectangle(percent = 0.4f)
 }
 
 internal val RockSkyCollectionShape

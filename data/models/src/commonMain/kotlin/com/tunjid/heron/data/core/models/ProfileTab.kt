@@ -64,15 +64,6 @@ sealed class ProfileTab : UrlEncodableModel {
         data object StarterPacks : Bluesky()
     }
 
-    @Serializable
-    sealed class StandardSite : ProfileTab() {
-        @Serializable
-        data object Publications : StandardSite()
-
-        @Serializable
-        data object Documents : StandardSite()
-    }
-
     companion object {
         val Static: List<ProfileTab> get() = StaticTabs
     }
@@ -96,6 +87,4 @@ private val StaticTabs: List<ProfileTab> = listOf(
     ProfileTab.Bluesky.FeedGenerators.All,
     ProfileTab.Bluesky.Lists.All,
     ProfileTab.Bluesky.StarterPacks,
-    ProfileTab.StandardSite.Documents,
-    ProfileTab.StandardSite.Publications,
 )

@@ -37,7 +37,6 @@ import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.gallery.di.postRecordKey
 import com.tunjid.heron.gallery.di.profileId
@@ -45,6 +44,7 @@ import com.tunjid.heron.tiling.seed
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.state.updateData
+import com.tunjid.heron.timeline.ui.toWritable
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.scaffold.navigation.model
@@ -138,7 +138,7 @@ class ActualGalleryViewModel(
                     keySelector = Action::key,
                 ) {
                     when (val action = type()) {
-                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                        is Action.RecordInteraction -> action.flow.launchRecordInteractionMutations(
                             state = state,
                             writeQueue = writeQueue,
                         )
@@ -245,12 +245,12 @@ private fun launchProfileRelationshipMutations(
     }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
+private fun Flow<Action.RecordInteraction>.launchRecordInteractionMutations(
     state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
-    toWritable = { it.publication.toSubscriptionWritable() },
+    toWritable = { it.interaction.toWritable() },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

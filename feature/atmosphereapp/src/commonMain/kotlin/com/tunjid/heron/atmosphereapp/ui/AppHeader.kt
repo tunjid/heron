@@ -51,10 +51,11 @@ import heron.feature.atmosphereapp.generated.resources.profiles_apps
 import heron.feature.atmosphereapp.generated.resources.tab_albums
 import heron.feature.atmosphereapp.generated.resources.tab_artists
 import heron.feature.atmosphereapp.generated.resources.tab_documents
+import heron.feature.atmosphereapp.generated.resources.tab_events_hosting
+import heron.feature.atmosphereapp.generated.resources.tab_events_rsvps
 import heron.feature.atmosphereapp.generated.resources.tab_publications
 import heron.feature.atmosphereapp.generated.resources.tab_scrobbles
 import heron.feature.atmosphereapp.generated.resources.tab_tracks
-import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -70,13 +71,7 @@ fun AtmosphereAppHeader(
     stateHolders: List<AppScreenStateHolders>,
 ) {
     Column(
-        modifier = modifier
-            .offset {
-                IntOffset(
-                    x = 0,
-                    y = -headerState.translation.roundToInt(),
-                )
-            },
+        modifier = modifier,
     ) {
         Spacer(
             modifier = Modifier
@@ -268,6 +263,8 @@ private fun AppScreenStateHolders.tabTitle(): String = stringResource(
         is AppScreenStateHolders.Rocksky.Tracks -> Res.string.tab_tracks
         is AppScreenStateHolders.Rocksky.Artists -> Res.string.tab_artists
         is AppScreenStateHolders.Rocksky.Scrobbles -> Res.string.tab_scrobbles
+        is AppScreenStateHolders.Events.Created -> Res.string.tab_events_hosting
+        is AppScreenStateHolders.Events.Rsvped -> Res.string.tab_events_rsvps
     },
 )
 

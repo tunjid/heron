@@ -45,13 +45,13 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.externalEmbeddedRecord
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.PostExternal
 import com.tunjid.heron.timeline.ui.post.PostHeadline
 import com.tunjid.heron.timeline.ui.post.PostMedia
@@ -80,7 +80,7 @@ internal fun QuotedPost(
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
     onProfileClicked: (Post, Profile) -> Unit,
     onPostMediaClicked: (Embed.Media, Int, Post) -> Unit,
-    onSubscriptionToggled: (StandardPublication) -> Unit,
+    onRecordInteraction: (PostAction.RecordInteraction) -> Unit,
 ) = with(paneTransitionScope) {
     val author = quotedPost.author
     var hasClickedThroughSensitiveMedia by rememberSaveable { mutableStateOf(false) }
@@ -170,7 +170,7 @@ internal fun QuotedPost(
                         onClick = {
                             uriHandler.openUri(embed.uri.uri)
                         },
-                        onSubscriptionToggled = onSubscriptionToggled,
+                        onRecordInteraction = onRecordInteraction,
                     )
 
                     is MediaList -> PostMedia(

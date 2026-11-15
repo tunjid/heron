@@ -44,6 +44,8 @@ data class StandardDocument(
     val bskyPostRef: Record.Reference?,
     val tags: List<String>,
     val publication: StandardPublication?,
+    val recommendationCount: Long,
+    val recommendation: StandardRecommendation?,
 ) : Record.Embeddable.External {
     override val reference: Record.Reference =
         Record.Reference(

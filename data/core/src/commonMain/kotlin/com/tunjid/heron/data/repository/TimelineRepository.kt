@@ -1340,40 +1340,55 @@ internal class OfflineTimelineRepository(
 
             val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
 
-            recordResolver.timelineItems(
-                items = response.posts,
-                signedInProfileId = signedInProfileId,
-                postUri = { PostUri(it.uri.atUri) },
-                associatedRecordUris = { postView ->
-                    postView.blueskyEmbeddedRecords(
-                        viewingProfileId = signedInProfileId,
+            postDao.postExternalAssociatedRecords(
+                postUris = response.posts.map { PostUri(it.uri.atUri) },
+            )
+                .distinctUntilChangedBy { entities ->
+                    entities.map(PostExternalAssociatedRecordEntity::recordUri)
+                }
+                .flatMapLatest { externalRecords ->
+                    val externalRecordUris = externalRecords.groupBy(
+                        keySelector = PostExternalAssociatedRecordEntity::postUri,
+                        valueTransform = PostExternalAssociatedRecordEntity::recordUri,
                     )
-                        .map(Record.Embeddable::embeddableRecordUri)
-                        .plus(postView.externalEmbeddedRecordUris())
-                },
-                associatedProfileIds = {
-                    emptyList()
-                },
-                block = block@{ item ->
-                    // Muted items should not show up in search
-                    if (isMuted(post)) return@block
-                    push(
-                        TimelineItem.Single(
-                            id = item.uri.atUri,
-                            post = post,
-                            isMuted = false,
-                            threadGate = threadGate(PostUri(item.uri.atUri)),
-                            appliedLabels = appliedLabels,
-                            signedInProfileId = signedInProfileId,
-                        ),
+                    recordResolver.timelineItems(
+                        items = response.posts,
+                        signedInProfileId = signedInProfileId,
+                        postUri = { PostUri(it.uri.atUri) },
+                        associatedRecordUris = { postView ->
+                            postView.blueskyEmbeddedRecords(
+                                viewingProfileId = signedInProfileId,
+                            )
+                                .map(Record.Embeddable::embeddableRecordUri)
+                                .plus(postView.externalEmbeddedRecordUris())
+                                .plus(externalRecordUris[PostUri(postView.uri.atUri)].orEmpty())
+                                .distinct()
+                        },
+                        associatedProfileIds = {
+                            emptyList()
+                        },
+                        block = block@{ item ->
+                            // Muted items should not show up in search
+                            if (isMuted(post)) return@block
+                            push(
+                                TimelineItem.Single(
+                                    id = item.uri.atUri,
+                                    post = post,
+                                    isMuted = false,
+                                    threadGate = threadGate(PostUri(item.uri.atUri)),
+                                    appliedLabels = appliedLabels,
+                                    signedInProfileId = signedInProfileId,
+                                ),
+                            )
+                        },
                     )
-                },
-            ).map {
-                CursorList(
-                    items = it,
-                    nextCursor = nextCursor,
-                )
-            }
+                }
+                .map {
+                    CursorList(
+                        items = it,
+                        nextCursor = nextCursor,
+                    )
+                }
         }
             .flowOn(ioDispatcher)
 
@@ -1431,38 +1446,53 @@ internal class OfflineTimelineRepository(
                 else -> response.cursor?.let(Cursor::Next) ?: Cursor.Final
             }
 
-            recordResolver.timelineItems(
-                items = postViews,
-                signedInProfileId = signedInProfileId,
-                postUri = { PostUri(it.uri.atUri) },
-                associatedRecordUris = { postView ->
-                    postView.blueskyEmbeddedRecords(
-                        viewingProfileId = signedInProfileId,
+            postDao.postExternalAssociatedRecords(
+                postUris = postViews.map { PostUri(it.uri.atUri) },
+            )
+                .distinctUntilChangedBy { entities ->
+                    entities.map(PostExternalAssociatedRecordEntity::recordUri)
+                }
+                .flatMapLatest { externalRecords ->
+                    val externalRecordUris = externalRecords.groupBy(
+                        keySelector = PostExternalAssociatedRecordEntity::postUri,
+                        valueTransform = PostExternalAssociatedRecordEntity::recordUri,
                     )
-                        .map(Record.Embeddable::embeddableRecordUri)
-                        .plus(postView.externalEmbeddedRecordUris())
-                },
-                associatedProfileIds = {
-                    emptyList()
-                },
-                block = block@{ item ->
-                    if (!isMuted(post)) push(
-                        TimelineItem.Single(
-                            id = item.uri.atUri,
-                            post = post,
-                            isMuted = false,
-                            threadGate = threadGate(PostUri(item.uri.atUri)),
-                            appliedLabels = appliedLabels,
-                            signedInProfileId = signedInProfileId,
-                        ),
+                    recordResolver.timelineItems(
+                        items = postViews,
+                        signedInProfileId = signedInProfileId,
+                        postUri = { PostUri(it.uri.atUri) },
+                        associatedRecordUris = { postView ->
+                            postView.blueskyEmbeddedRecords(
+                                viewingProfileId = signedInProfileId,
+                            )
+                                .map(Record.Embeddable::embeddableRecordUri)
+                                .plus(postView.externalEmbeddedRecordUris())
+                                .plus(externalRecordUris[PostUri(postView.uri.atUri)].orEmpty())
+                                .distinct()
+                        },
+                        associatedProfileIds = {
+                            emptyList()
+                        },
+                        block = block@{ item ->
+                            if (!isMuted(post)) push(
+                                TimelineItem.Single(
+                                    id = item.uri.atUri,
+                                    post = post,
+                                    isMuted = false,
+                                    threadGate = threadGate(PostUri(item.uri.atUri)),
+                                    appliedLabels = appliedLabels,
+                                    signedInProfileId = signedInProfileId,
+                                ),
+                            )
+                        },
                     )
-                },
-            ).map {
-                CursorList(
-                    items = it,
-                    nextCursor = nextCursor,
-                )
-            }
+                }
+                .map {
+                    CursorList(
+                        items = it,
+                        nextCursor = nextCursor,
+                    )
+                }
         }
             .flowOn(ioDispatcher)
 

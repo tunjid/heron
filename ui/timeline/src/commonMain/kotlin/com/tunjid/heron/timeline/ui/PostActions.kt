@@ -19,13 +19,20 @@ package com.tunjid.heron.timeline.ui
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.Rsvp
+import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.recommendationWritable
+import com.tunjid.heron.data.utilities.writequeue.rsvpWritable
+import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.timeline.ui.post.PostMetadata
 
 sealed interface PostAction {
@@ -55,10 +62,6 @@ sealed interface PostAction {
     data class OfRecord(
         val record: Record,
         val owningPostUri: PostUri,
-    ) : PostAction
-
-    data class OfPublicationSubscription(
-        val publication: StandardPublication,
     ) : PostAction
 
     data class OfMedia(
@@ -91,6 +94,27 @@ sealed interface PostAction {
         val feedContext: String?,
         val reqId: FeedReqId?,
     ) : Options
+
+    sealed interface RecordInteraction : PostAction
+
+    data class OfPublicationSubscription(
+        val publication: StandardPublication,
+    ) : RecordInteraction
+
+    data class OfRsvp(
+        val event: Event,
+        val status: Rsvp.Status?,
+    ) : RecordInteraction
+
+    data class OfDocumentRecommendation(
+        val document: StandardDocument,
+    ) : RecordInteraction
+}
+
+fun PostAction.RecordInteraction.toWritable(): Writable? = when (this) {
+    is PostAction.OfPublicationSubscription -> publication.toSubscriptionWritable()
+    is PostAction.OfRsvp -> event.rsvpWritable(status)
+    is PostAction.OfDocumentRecommendation -> document.recommendationWritable()
 }
 
 @Stable

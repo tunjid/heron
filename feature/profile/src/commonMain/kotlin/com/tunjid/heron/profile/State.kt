@@ -30,8 +30,6 @@ import com.tunjid.heron.data.core.models.ProfileLink
 import com.tunjid.heron.data.core.models.ProfileTab
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.StandardDocument
-import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
@@ -42,8 +40,6 @@ import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.data.core.types.StandardPublicationUri
-import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings
 import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings.Settings
 import com.tunjid.heron.profile.ProfileScreenStateHolders.Records
@@ -53,6 +49,7 @@ import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.state.RecordStateHolder
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
@@ -150,16 +147,6 @@ sealed class ProfileScreenStateHolders {
         class StarterPacks(
             mutator: RecordStateHolder<StarterPack>,
         ) : Records<StarterPack>(mutator)
-
-        @Stable
-        class Documents(
-            mutator: RecordStateHolder<StandardDocument>,
-        ) : Records<StandardDocument>(mutator)
-
-        @Stable
-        class Publications(
-            mutator: RecordStateHolder<StandardPublication>,
-        ) : Records<StandardPublication>(mutator)
     }
 
     @Stable
@@ -195,19 +182,15 @@ sealed class ProfileScreenStateHolders {
             is Records.Feeds -> "Feeds"
             is Records.Lists -> "Lists"
             is Records.StarterPacks -> "StarterPacks"
-            is Records.Documents -> "Documents"
-            is Records.Publications -> "Publications"
             is Timeline -> state.timeline.sourceId
             is LabelerSettings -> "LabelerSettings"
         }
 
-    val tab
+    val tab: ProfileTab?
         get() = when (this) {
             is Records.Feeds -> ProfileTab.Bluesky.FeedGenerators.All
             is Records.Lists -> ProfileTab.Bluesky.Lists.All
             is Records.StarterPacks -> ProfileTab.Bluesky.StarterPacks
-            is Records.Documents -> ProfileTab.StandardSite.Documents
-            is Records.Publications -> ProfileTab.StandardSite.Publications
             is Timeline -> when (val timeline = state.timeline) {
                 is com.tunjid.heron.data.core.models.Timeline.Home.Feed -> ProfileTab.Bluesky.FeedGenerators.FeedGenerator(
                     timeline.feedGenerator.uri,
@@ -318,15 +301,9 @@ sealed class Action(val key: String) {
         val page: Int,
     ) : Action(key = "PageChanged")
 
-    sealed class TogglePublicationSubscription : Action(key = "TogglePublicationSubscription") {
-        data class Subscribe(
-            val publicationUri: StandardPublicationUri,
-        ) : TogglePublicationSubscription()
-
-        data class Unsubscribe(
-            val subscriptionUri: StandardSubscriptionUri,
-        ) : TogglePublicationSubscription()
-    }
+    data class RecordInteraction(
+        val interaction: PostAction.RecordInteraction,
+    ) : Action(key = "RecordInteraction")
 
     data class DeleteRecord(
         val recordUri: RecordUri,

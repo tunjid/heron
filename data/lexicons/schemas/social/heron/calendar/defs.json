@@ -1,0 +1,140 @@
+{
+  "lexicon": 1,
+  "id": "social.heron.calendar.defs",
+  "defs": {
+    "eventView": {
+      "type": "object",
+      "required": ["uri", "cid", "author", "record", "sortedAt", "goingCount", "interestedCount", "notGoingCount"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "author": {
+          "type": "ref",
+          "ref": "social.heron.actor.defs#profileView"
+        },
+        "record": {
+          "type": "unknown",
+          "description": "The full community.lexicon.calendar.event record."
+        },
+        "sortedAt": {
+          "type": "string",
+          "format": "datetime",
+          "description": "Canonical sort timestamp: the record's createdAt, else its TID."
+        },
+        "goingCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "People whose latest RSVP is community.lexicon.calendar.rsvp#going."
+        },
+        "interestedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "People whose latest RSVP is community.lexicon.calendar.rsvp#interested."
+        },
+        "notGoingCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "People whose latest RSVP is community.lexicon.calendar.rsvp#notgoing."
+        },
+        "viewerRsvp": {
+          "type": "ref",
+          "ref": "#rsvpView",
+          "description": "The authenticated viewer's latest community.lexicon.calendar.rsvp for this event. Absent if none or unauthenticated."
+        },
+        "thumbnailUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Fetchable URL of the event's thumbnail image: the record's first media entry with role 'thumbnail', else its first image. Absent if the event has no usable image."
+        },
+        "thumbnailAspectRatio": {
+          "type": "ref",
+          "ref": "#aspectRatio",
+          "description": "The thumbnail's aspect ratio, as the record declared it. Absent if undeclared or invalid."
+        },
+        "bskyPostRef": {
+          "type": "ref",
+          "ref": "#bskyPostRef",
+          "description": "The Bluesky post the event was shared as, from the record's bskyPostRef. Its replies are the event's comments. Absent if the record has none or it isn't a valid strong ref to an app.bsky.feed.post."
+        }
+      }
+    },
+    "bskyPostRef": {
+      "type": "object",
+      "description": "A strong ref to the Bluesky post an event was shared as.",
+      "required": ["uri", "cid", "showComments"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "showComments": {
+          "type": "boolean",
+          "description": "Whether the organizer wants the post's replies shown as the event's comments. False if the record left it unset."
+        }
+      }
+    },
+    "aspectRatio": {
+      "type": "object",
+      "description": "Width and height of an image, as a ratio.",
+      "required": ["width", "height"],
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "rsvpView": {
+      "type": "object",
+      "required": ["uri", "cid", "author", "eventUri", "status", "sortedAt"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "author": {
+          "type": "ref",
+          "ref": "social.heron.actor.defs#profileView",
+          "description": "The person who RSVPed."
+        },
+        "eventUri": {
+          "type": "string",
+          "format": "at-uri",
+          "description": "AT URI of the event this RSVP responds to."
+        },
+        "status": {
+          "type": "string",
+          "knownValues": [
+            "community.lexicon.calendar.rsvp#going",
+            "community.lexicon.calendar.rsvp#interested",
+            "community.lexicon.calendar.rsvp#notgoing"
+          ],
+          "description": "Always fully qualified, even if the record wrote a bare token."
+        },
+        "sortedAt": {
+          "type": "string",
+          "format": "datetime",
+          "description": "Canonical sort timestamp for the RSVP (derived from the record TID)."
+        }
+      }
+    }
+  }
+}

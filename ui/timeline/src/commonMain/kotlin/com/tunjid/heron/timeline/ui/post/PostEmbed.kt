@@ -34,6 +34,7 @@ import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.AppliedLabels.Companion.withLabels
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
@@ -43,12 +44,12 @@ import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.label.Labeler
 import com.tunjid.heron.timeline.ui.list.FeedList
@@ -88,7 +89,7 @@ fun PostEmbed(
     onPostMediaClicked: (media: Embed.Media, index: Int, quote: Post?) -> Unit,
     onEmbeddedRecordClicked: (Record) -> Unit,
     onQuotedProfileClicked: (Post, Profile) -> Unit,
-    onPublicationSubscriptionToggled: (StandardPublication) -> Unit,
+    onRecordInteraction: (PostAction.RecordInteraction) -> Unit,
     presentation: Timeline.Presentation,
 ) {
     val uriHandler = LocalUriHandler.current
@@ -115,9 +116,13 @@ fun PostEmbed(
                     isBlurred = isBlurred,
                     paneTransitionScope = paneTransitionScope,
                     onClick = {
-                        uriHandler.openUri(embed.uri.uri)
+                        // Events open in app, everything else opens its link.
+                        when (externalEmbeddedRecord) {
+                            is Event -> onEmbeddedRecordClicked(externalEmbeddedRecord)
+                            else -> uriHandler.openUri(embed.uri.uri)
+                        }
                     },
-                    onSubscriptionToggled = onPublicationSubscriptionToggled,
+                    onRecordInteraction = onRecordInteraction,
                 )
 
                 is MediaList -> PostMedia(
@@ -197,7 +202,7 @@ fun PostEmbed(
                             onClick = {
                                 onEmbeddedRecordClicked(nativeEmbeddedRecord)
                             },
-                            onSubscriptionToggled = onPublicationSubscriptionToggled,
+                            onRecordInteraction = onRecordInteraction,
                         )
                     }
                     is FeedGenerator -> FeatureContainer(

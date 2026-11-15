@@ -1,0 +1,49 @@
+{
+  "lexicon": 1,
+  "id": "social.heron.standard.getRecommendedDocuments",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "List documents the authenticated viewer recommends, most recently recommended first. Requires authentication.",
+      "parameters": {
+        "type": "params",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["documents"],
+          "properties": {
+            "cursor": {
+              "type": "string"
+            },
+            "documents": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "social.heron.standard.defs#documentView"
+              }
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "name": "AuthRequired",
+          "description": "Authentication is required for this endpoint."
+        }
+      ]
+    }
+  }
+}

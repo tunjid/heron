@@ -19,26 +19,30 @@ package com.tunjid.heron.atmosphereapp
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.atmosphereapp.di.profileHandleOrId
 import com.tunjid.heron.data.core.models.AtmosphereApp
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.RockskyAlbum
 import com.tunjid.heron.data.core.models.RockskyArtist
 import com.tunjid.heron.data.core.models.RockskyScrobble
 import com.tunjid.heron.data.core.models.RockskyTrack
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
-import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
+import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RsvpUri
 import com.tunjid.heron.data.core.types.ScrobbleUri
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.TrackUri
+import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
-import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.repository.records.RsvpedEventsQuery
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.timeline.state.recordStateHolder
+import com.tunjid.heron.timeline.ui.toWritable
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
@@ -54,12 +58,15 @@ import heron.feature.atmosphereapp.generated.resources.Res
 import heron.feature.atmosphereapp.generated.resources.tab_albums
 import heron.feature.atmosphereapp.generated.resources.tab_artists
 import heron.feature.atmosphereapp.generated.resources.tab_documents
+import heron.feature.atmosphereapp.generated.resources.tab_events_hosting
+import heron.feature.atmosphereapp.generated.resources.tab_events_rsvps
 import heron.feature.atmosphereapp.generated.resources.tab_publications
 import heron.feature.atmosphereapp.generated.resources.tab_scrobbles
 import heron.feature.atmosphereapp.generated.resources.tab_tracks
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
@@ -81,6 +88,7 @@ class ActualAtmosphereAppViewModel(
 
     @AssistedInject
     constructor(
+        authRepository: AuthRepository,
         profileRepository: ProfileRepository,
         recordRepository: RecordRepository,
         writeQueue: WriteQueue,
@@ -93,11 +101,12 @@ class ActualAtmosphereAppViewModel(
             started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
             producer = { state, actions ->
                 launchProfileLoadMutations(
-                    profileRepository,
-                    route,
-                    scope,
-                    state,
-                    recordRepository,
+                    authRepository = authRepository,
+                    profileRepository = profileRepository,
+                    route = route,
+                    scope = scope,
+                    state = state,
+                    recordRepository = recordRepository,
                 )
 
                 actions.launchMutationsIn(
@@ -111,7 +120,7 @@ class ActualAtmosphereAppViewModel(
                         is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
                             state = state,
                         )
-                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                        is Action.RecordInteraction -> action.flow.launchRecordInteractionMutations(
                             state = state,
                             writeQueue = writeQueue,
                         )
@@ -128,6 +137,7 @@ class ActualAtmosphereAppViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchProfileLoadMutations(
+    authRepository: AuthRepository,
     profileRepository: ProfileRepository,
     route: Route,
     scope: CoroutineScope,
@@ -145,16 +155,22 @@ private fun launchProfileLoadMutations(
         state.profile = profile
     }
 
-    sharedProfile
-        .map { it.did }
+    combine(
+        sharedProfile.map { it.did },
+        authRepository.signedInUser.map { it?.did },
+    ) { resolvedProfileId, signedInProfileId ->
+        resolvedProfileId to (resolvedProfileId == signedInProfileId)
+    }
         .distinctUntilChanged()
-        .launchedCollectLatest { resolvedProfileId ->
+        .launchedCollectLatest { (resolvedProfileId, isSignedInProfile) ->
+            state.isSignedInProfile = isSignedInProfile
             val keysToHolders = state.stateHolders
                 .associateBy(AppScreenStateHolders::key)
 
             state.stateHolders = stateHoldersFor(
                 app = state.app,
                 profileId = resolvedProfileId,
+                isSignedInProfile = isSignedInProfile,
                 existingHolders = keysToHolders,
                 viewModelScope = scope,
                 recordRepository = recordRepository,
@@ -170,21 +186,12 @@ private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
+private fun Flow<Action.RecordInteraction>.launchRecordInteractionMutations(
     state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
-    toWritable = { action ->
-        when (action) {
-            is Action.TogglePublicationSubscription.Subscribe -> Writable.StandardSite.Subscribe(
-                create = StandardSubscription.Create(publicationUri = action.publicationUri),
-            )
-            is Action.TogglePublicationSubscription.Unsubscribe -> Writable.RecordDeletion(
-                recordUri = action.subscriptionUri,
-            )
-        }
-    },
+    toWritable = { it.interaction.toWritable() },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },
@@ -193,6 +200,7 @@ private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSu
 private fun stateHoldersFor(
     app: AtmosphereApp?,
     profileId: ProfileId,
+    isSignedInProfile: Boolean,
     existingHolders: Map<String, AppScreenStateHolders>,
     viewModelScope: CoroutineScope,
     recordRepository: RecordRepository,
@@ -254,6 +262,36 @@ private fun stateHoldersFor(
                     cursorListLoader = recordRepository::albums,
                 ),
             ),
+    )
+    AtmosphereApp.EventsId -> listOfNotNull(
+        existingHolders[EventUri.NAMESPACE]
+            ?: AppScreenStateHolders.Events.Created(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_events_hosting,
+                    itemId = Event::uri,
+                    cursorListLoader = recordRepository::authorEvents,
+                ),
+            ),
+        // RSVPs are only available for the signed in user
+        if (isSignedInProfile) existingHolders[RsvpUri.NAMESPACE]
+            ?: AppScreenStateHolders.Events.Rsvped(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_events_rsvps,
+                    itemId = Event::uri,
+                    cursorListLoader = { query, cursor ->
+                        recordRepository.rsvpedEvents(
+                            query = RsvpedEventsQuery(
+                                status = null,
+                                data = query.data,
+                            ),
+                            cursor = cursor,
+                        )
+                    },
+                ),
+            )
+        else null,
     )
     else -> emptyList()
 }

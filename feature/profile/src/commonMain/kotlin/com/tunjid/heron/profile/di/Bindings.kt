@@ -197,7 +197,6 @@ internal fun Route(
                     },
                 fabExpanded = isBottomNavOffsetNearOrigin,
                 state = profileFabState(state),
-                profileHandle = state.profile.handle,
                 onStateClicked = { fabState ->
                     stateHolder.accept(
                         Action.Navigate.To(
@@ -212,7 +211,6 @@ internal fun Route(
                                     type = Post.Create.Mention(state.profile),
                                     sharedElementPrefix = null,
                                 )
-                                ProfileFabState.SignedIn.Writing -> error("Handled above")
                             },
                         ),
                     )
@@ -252,7 +250,6 @@ private fun PaneScaffoldState.profileFabState(
     isSignedOut -> ProfileFabState.SignedOut
     state.isSignedInProfile -> when (state.stateHolders.getOrNull(state.currentPage)) {
         is ProfileScreenStateHolders.Records.Feeds -> ProfileFabState.SignedIn.Feed
-        is ProfileScreenStateHolders.Records.Documents -> ProfileFabState.SignedIn.Writing
         else -> ProfileFabState.SignedIn.Edit
     }
     else -> ProfileFabState.SignedIn.Mention

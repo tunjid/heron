@@ -24,6 +24,7 @@ import com.tunjid.heron.data.database.AppDatabase
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.configureAndBuild
 import com.tunjid.heron.data.database.daos.EmbedDao
+import com.tunjid.heron.data.database.daos.EventDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -91,7 +92,9 @@ import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.records.BlueskyRecordOperations
+import com.tunjid.heron.data.repository.records.EventRecordOperations
 import com.tunjid.heron.data.repository.records.OfflineFirstBlueskyRecordOperations
+import com.tunjid.heron.data.repository.records.OfflineFirstEventRecordOperations
 import com.tunjid.heron.data.repository.records.OfflineFirstRockskyRecordOperations
 import com.tunjid.heron.data.repository.records.OfflineFirstStandardSiteRecordOperations
 import com.tunjid.heron.data.repository.records.RockskyRecordOperations
@@ -499,6 +502,12 @@ object DataBindings {
 
     @SingleIn(AppScope::class)
     @Provides
+    fun provideEventDao(
+        database: AppDatabase,
+    ): EventDao = database.eventDao()
+
+    @SingleIn(AppScope::class)
+    @Provides
     fun provideTransactionWriter(
         database: AppDatabase,
     ): TransactionWriter = TransactionWriter { block ->
@@ -618,6 +627,12 @@ object DataBindings {
     internal fun provideStandardSiteRecordOperations(
         offlineFirstStandardSiteRecordOperations: OfflineFirstStandardSiteRecordOperations,
     ): StandardSiteRecordOperations = offlineFirstStandardSiteRecordOperations
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideEventRecordOperations(
+        offlineFirstEventRecordOperations: OfflineFirstEventRecordOperations,
+    ): EventRecordOperations = offlineFirstEventRecordOperations
 
     @SingleIn(AppScope::class)
     @Provides

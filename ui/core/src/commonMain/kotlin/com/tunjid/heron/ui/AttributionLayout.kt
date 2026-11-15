@@ -22,18 +22,20 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun AttributionLayout(
     modifier: Modifier = Modifier,
+    avatarSpacing: Dp = 4.dp,
     avatar: @Composable (() -> Unit)?,
     label: @Composable () -> Unit,
     action: @Composable (() -> Unit)? = null,
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = spacedBy(4.dp),
+        horizontalArrangement = spacedBy(avatarSpacing),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         avatar?.invoke()

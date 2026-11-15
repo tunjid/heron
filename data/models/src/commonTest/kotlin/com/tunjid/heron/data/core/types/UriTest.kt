@@ -146,6 +146,24 @@ class UriTest {
     }
 
     @Test
+    fun asRecordUriOrNull_parsesUnprefixedStandardRecommendationUri() {
+        val input = "$authority/${StandardRecommendationUri.NAMESPACE}/$rkey"
+        assertIs<StandardRecommendationUri>(input.asRecordUriOrNull())
+    }
+
+    @Test
+    fun asRecordUriOrNull_parsesUnprefixedEventUri() {
+        val input = "$authority/${EventUri.NAMESPACE}/$rkey"
+        assertIs<EventUri>(input.asRecordUriOrNull())
+    }
+
+    @Test
+    fun asRecordUriOrNull_parsesUnprefixedRsvpUri() {
+        val input = "$authority/${RsvpUri.NAMESPACE}/$rkey"
+        assertIs<RsvpUri>(input.asRecordUriOrNull())
+    }
+
+    @Test
     fun asRecordUriOrNull_unprefixedUnknownCollectionBecomesUnknownRecordUri() {
         val input = "$authority/made.up.collection/$rkey"
         val parsed = input.asRecordUriOrNull()

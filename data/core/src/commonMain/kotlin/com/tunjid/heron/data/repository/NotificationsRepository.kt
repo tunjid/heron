@@ -35,6 +35,7 @@ import com.tunjid.heron.data.core.models.Block
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Follow
@@ -50,8 +51,10 @@ import com.tunjid.heron.data.core.models.RockskyAlbum
 import com.tunjid.heron.data.core.models.RockskyArtist
 import com.tunjid.heron.data.core.models.RockskyScrobble
 import com.tunjid.heron.data.core.models.RockskyTrack
+import com.tunjid.heron.data.core.models.Rsvp
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StandardRecommendation
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.isFollowing
@@ -444,6 +447,9 @@ internal class OfflineNotificationsRepository(
                         is Block,
                         is StandardPublication,
                         is StandardSubscription,
+                        is StandardRecommendation,
+                        is Event,
+                        is Rsvp,
                         is RockskyAlbum,
                         is RockskyArtist,
                         is RockskyScrobble,

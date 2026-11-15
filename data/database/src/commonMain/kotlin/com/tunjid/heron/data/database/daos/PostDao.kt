@@ -100,6 +100,16 @@ interface PostDao {
         crossReferences: List<PostExternalAssociatedRecordEntity>,
     )
 
+    @Query(
+        """
+            SELECT * FROM postExternalAssociatedRecords
+            WHERE postUri IN (:postUris)
+        """,
+    )
+    fun postExternalAssociatedRecords(
+        postUris: Collection<PostUri>,
+    ): Flow<List<PostExternalAssociatedRecordEntity>>
+
     @Transaction
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertPostExternalAssociatedProfiles(

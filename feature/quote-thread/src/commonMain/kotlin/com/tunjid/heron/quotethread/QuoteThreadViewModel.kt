@@ -33,10 +33,10 @@ import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.quotethread.di.postRecordKey
 import com.tunjid.heron.quotethread.di.profileHandleOrId
+import com.tunjid.heron.timeline.ui.toWritable
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
@@ -122,7 +122,7 @@ class ActualQuoteThreadViewModel(
                         keySelector = Action::key,
                     ) {
                         when (val action = type()) {
-                            is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            is Action.RecordInteraction -> action.flow.launchRecordInteractionMutations(
                                 state = state,
                                 writeQueue = writeQueue,
                             )
@@ -224,12 +224,12 @@ private fun launchInferenceCapabilityMutations(
     state.canRunInference = capability.isAvailable
 }
 context(productionScope: CoroutineScope)
-private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
+private fun Flow<Action.RecordInteraction>.launchRecordInteractionMutations(
     state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
-    toWritable = { it.publication.toSubscriptionWritable() },
+    toWritable = { it.interaction.toWritable() },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

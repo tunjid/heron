@@ -19,6 +19,10 @@ package com.tunjid.heron.timeline.utilities
 import androidx.compose.runtime.Composable
 import java.text.DateFormat
 import java.text.SimpleDateFormat
+import java.time.ZoneId
+import java.time.chrono.IsoChronology
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
 import java.util.Date
 import java.util.Locale
 import kotlin.time.Instant
@@ -37,3 +41,29 @@ actual fun Instant.formatTime(): String {
         .getTimeInstance(DateFormat.SHORT, Locale.getDefault())
         .format(Date.from(toJavaInstant()))
 }
+
+@Composable
+actual fun Instant.formatWeekdayDate(): String =
+    formatLocalized(template = WeekdayDateTemplate)
+
+@Composable
+actual fun Instant.formatHour(): String {
+    val usesDayPeriod = DateTimeFormatterBuilder
+        .getLocalizedDateTimePattern(
+            "j",
+            IsoChronology.INSTANCE,
+            Locale.getDefault(),
+        )
+        .contains('a')
+    return formatLocalized(
+        template = if (usesDayPeriod && isOnTheHour) "j" else "jmm",
+    )
+}
+
+private fun Instant.formatLocalized(
+    template: String,
+): String = DateTimeFormatter
+    .ofLocalizedPattern(template)
+    .withLocale(Locale.getDefault())
+    .withZone(ZoneId.systemDefault())
+    .format(toJavaInstant())

@@ -1,0 +1,64 @@
+{
+  "lexicon": 1,
+  "id": "social.heron.calendar.getRsvps",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "List the people who RSVPed to an event with their latest response, most recent RSVP first. Requires authentication.",
+      "parameters": {
+        "type": "params",
+        "required": ["uri"],
+        "properties": {
+          "uri": {
+            "type": "string",
+            "format": "at-uri",
+            "description": "AT URI of the community.lexicon.calendar.event."
+          },
+          "status": {
+            "type": "string",
+            "knownValues": [
+              "community.lexicon.calendar.rsvp#going",
+              "community.lexicon.calendar.rsvp#interested",
+              "community.lexicon.calendar.rsvp#notgoing"
+            ],
+            "description": "Only people whose latest response has this status. Bare tokens (going) are accepted."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["rsvps"],
+          "properties": {
+            "cursor": {
+              "type": "string"
+            },
+            "rsvps": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "social.heron.calendar.defs#rsvpView"
+              }
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "name": "AuthRequired",
+          "description": "Authentication is required for this endpoint."
+        }
+      ]
+    }
+  }
+}

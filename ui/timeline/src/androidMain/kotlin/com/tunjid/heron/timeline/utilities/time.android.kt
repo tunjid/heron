@@ -19,7 +19,9 @@ package com.tunjid.heron.timeline.utilities
 import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 import kotlin.time.Instant
 import kotlin.time.toJavaInstant
 
@@ -35,4 +37,27 @@ actual fun Instant.formatTime(): String {
     return DateFormat
         .getTimeFormat(LocalContext.current)
         .format(Date.from(toJavaInstant()))
+}
+
+@Composable
+actual fun Instant.formatWeekdayDate(): String {
+    val locale = Locale.getDefault()
+    return SimpleDateFormat(
+        DateFormat.getBestDateTimePattern(locale, WeekdayDateTemplate),
+        locale,
+    ).format(Date.from(toJavaInstant()))
+}
+
+@Composable
+actual fun Instant.formatHour(): String {
+    val locale = Locale.getDefault()
+    val template = when {
+        DateFormat.is24HourFormat(LocalContext.current) -> "Hmm"
+        isOnTheHour -> "h"
+        else -> "hmm"
+    }
+    return SimpleDateFormat(
+        DateFormat.getBestDateTimePattern(locale, template),
+        locale,
+    ).format(Date.from(toJavaInstant()))
 }

@@ -16,6 +16,11 @@
 
 package com.tunjid.heron.timeline.ui.standard
 
+import androidx.compose.animation.CapturedAnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +28,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -37,17 +44,22 @@ import com.tunjid.heron.timeline.utilities.DocumentCollectionShape
 import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelFlowRow
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.RecordBlurb
 import com.tunjid.heron.ui.RecordSubtitle
 import com.tunjid.heron.ui.RecordText
 import com.tunjid.heron.ui.RecordTitle
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Star
 import com.tunjid.heron.ui.rememberLatchedState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.standard_publication_subscribe_to
 import heron.ui.core.generated.resources.standard_publication_unsubscribe_from
 import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.standard_document_recommend
+import heron.ui.timeline.generated.resources.standard_document_remove_recommendation
 import heron.ui.timeline.generated.resources.standard_site_published_in
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -64,6 +76,7 @@ fun Document(
     document: StandardDocument,
     onPublicationClicked: ((StandardPublication) -> Unit)?,
     onSubscriptionToggled: ((StandardPublication, StandardSubscription?) -> Unit)?,
+    onRecommendationToggled: ((StandardDocument) -> Unit)?,
 ) = with(paneTransitionScope) {
     Column(
         modifier = modifier,
@@ -72,11 +85,12 @@ fun Document(
         AttributionLayout(
             modifier = Modifier
                 .fillMaxWidth(),
+            avatarSpacing = 8.dp,
             avatar = {
                 document.coverImage?.let { cover ->
                     AsyncImage(
                         modifier = Modifier
-                            .size(48.dp),
+                            .size(56.dp),
                         args = remember(
                             cover,
                         ) {
@@ -93,6 +107,7 @@ fun Document(
             label = {
                 RecordTitle(
                     title = document.title,
+                    maxLines = 2,
                 )
                 Spacer(Modifier.height(2.dp))
 
@@ -176,6 +191,11 @@ fun Document(
                     )
                 }
 
+            if (onRecommendationToggled != null) RecommendButton(
+                document = document,
+                onRecommendationToggled = onRecommendationToggled,
+            )
+
             if (onSubscriptionToggled != null) SubscribeButton(
                 document = document,
                 onSubscriptionToggled = onSubscriptionToggled,
@@ -217,6 +237,52 @@ private fun SubscribeButton(
     }
 }
 
+@Composable
+private fun RecommendButton(
+    document: StandardDocument,
+    onRecommendationToggled: (StandardDocument) -> Unit,
+) {
+    val recommended = document.recommendation != null
+    val latchedRecommendedState = rememberLatchedState(recommended)
+    val contentDescription = stringResource(
+        if (latchedRecommendedState.value) Res.string.standard_document_remove_recommendation
+        else Res.string.standard_document_recommend,
+    )
+
+    Label(
+        modifier = Modifier
+            .animateContentSize(),
+        contentDescription = contentDescription,
+        isElevated = true,
+        icon = {
+            Icon(
+                modifier = Modifier
+                    .size(16.dp),
+                imageVector = HeronIcons.Regular.Star,
+                contentDescription = null,
+                tint =
+                if (latchedRecommendedState.value) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.outline,
+            )
+        },
+        description = {
+            CapturedAnimatedVisibility(
+                visible = document.recommendationCount > 0,
+                enter = RecommendationEnterAnim,
+                exit = RecommendationExitAnim,
+            ) {
+                RecordBlurb(
+                    format(value = document.recommendationCount),
+                )
+            }
+        },
+        onClick = {
+            latchedRecommendedState.latch(!recommended)
+            onRecommendationToggled(document)
+        },
+    )
+}
+
 private fun StandardDocument.publishDate(): String =
     publishedAt
         .toLocalDateTime(TimeZone.currentSystemDefault())
@@ -229,3 +295,6 @@ private fun StandardDocument.publishDate(): String =
                 year()
             },
         )
+
+private val RecommendationEnterAnim = slideInHorizontally()
+private val RecommendationExitAnim = fadeOut() + shrinkOut()

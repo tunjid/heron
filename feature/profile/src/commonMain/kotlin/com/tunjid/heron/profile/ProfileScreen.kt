@@ -46,7 +46,6 @@ import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -76,7 +75,6 @@ import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
@@ -107,7 +105,6 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.core.types.takeIfIs
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.media.images.AsyncImage
@@ -148,8 +145,6 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.profile.verificationBadge
 import com.tunjid.heron.timeline.ui.record.RecordList
-import com.tunjid.heron.timeline.ui.standard.Document
-import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelText
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
@@ -174,6 +169,7 @@ import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
+import com.tunjid.heron.ui.pinnedHeaderOffset
 import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.atmosphereAppDestination
@@ -188,7 +184,6 @@ import com.tunjid.heron.ui.scaffold.navigation.profileFollowsDestination
 import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.searchProfilePostsDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
-import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
@@ -196,7 +191,6 @@ import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
 import com.tunjid.heron.ui.scaffold.scaffold.pinnedHeaderScrim
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPinnedHeaderState
-import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.shapes.Rectangle
 import com.tunjid.heron.ui.tabIndex
@@ -534,90 +528,6 @@ internal fun ProfileScreen(
                             },
                         )
 
-                        is ProfileScreenStateHolders.Records.Documents -> RecordList(
-                            collectionStateHolder = stateHolder,
-                            prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                            itemKey = { it.uri.uri },
-                            itemContent = { document ->
-                                val uriHandler = LocalUriHandler.current
-                                Document(
-                                    modifier = Modifier
-                                        .fillParentMaxWidth()
-                                        .clip(RecordShape)
-                                        .animateItem()
-                                        .clickable {
-                                            runCatching {
-                                                document.link
-                                                    ?.takeIfIs(Uri.Host.Https)
-                                                    ?.let(uriHandler::openUri)
-                                            }
-                                        }
-                                        .recordPadding(),
-                                    paneTransitionScope = paneScaffoldState,
-                                    sharedElementPrefix = document.uri.uri,
-                                    document = document,
-                                    onPublicationClicked = {
-                                        actions(
-                                            Action.Navigate.To(
-                                                standardPublicationDestination(
-                                                    publication = it,
-                                                    sharedElementPrefix = document.uri.uri,
-                                                ),
-                                            ),
-                                        )
-                                    },
-                                    onSubscriptionToggled = { publication, subscription ->
-                                        actions(
-                                            if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                                                subscriptionUri = subscription.uri,
-                                            )
-                                            else Action.TogglePublicationSubscription.Subscribe(
-                                                publicationUri = publication.uri,
-                                            ),
-                                        )
-                                    },
-                                )
-                            },
-                        )
-                        is ProfileScreenStateHolders.Records.Publications -> RecordList(
-                            collectionStateHolder = stateHolder,
-                            prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                            itemKey = { it.uri.uri },
-                            itemContent = { publication ->
-                                Publication(
-                                    modifier = Modifier
-                                        .fillParentMaxWidth()
-                                        .animateItem()
-                                        .shapedClickable {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    pathDestination(
-                                                        path = publication.uri.path,
-                                                        models = listOf(publication),
-                                                        sharedElementPrefix = publication.uri.uri,
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    ),
-                                                ),
-                                            )
-                                        }
-                                        .recordPadding(),
-                                    paneTransitionScope = paneScaffoldState,
-                                    sharedElementPrefix = publication.uri.uri,
-                                    publication = publication,
-                                    onSubscriptionToggled = { publication, subscription ->
-                                        actions(
-                                            if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                                                subscriptionUri = subscription.uri,
-                                            )
-                                            else Action.TogglePublicationSubscription.Subscribe(
-                                                publicationUri = publication.uri,
-                                            ),
-                                        )
-                                    },
-                                )
-                            },
-                        )
-
                         is ProfileScreenStateHolders.Timeline -> ProfileTimeline(
                             bottomPadding = collapsedHeight,
                             paneScaffoldState = paneScaffoldState,
@@ -723,17 +633,13 @@ private fun ProfileHeader(
         val surfaceColor = MaterialTheme.colorScheme.surface
         Box(
             modifier = Modifier
-                .renderHeaderInTransitionOverlay(
-                    paneScaffoldState = paneScaffoldState,
-                    zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
-                )
                 .pinnedHeaderScrim(
                     state = headerState.headerState,
                     scrimColor = MaterialTheme.colorScheme.surface,
                 )
-                .offset {
-                    headerState.bioOffset()
-                }
+                .pinnedHeaderOffset(
+                    state = headerState.headerState,
+                )
                 .padding(top = headerState.bioTopPadding),
         ) {
             PaneStickySharedElement(
@@ -754,9 +660,9 @@ private fun ProfileHeader(
         Column(
             modifier = Modifier
                 .padding(top = headerState.bioTopPadding)
-                .offset {
-                    headerState.bioOffset()
-                },
+                .pinnedHeaderOffset(
+                    state = headerState.headerState,
+                ),
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -1669,17 +1575,8 @@ private fun ProfileTimeline(
                                         postOptionsSheetState.showOptions(action.post)
                                     }
 
-                                    is PostAction.OfPublicationSubscription ->
-                                        actions(
-                                            when (val subscription = action.publication.subscription) {
-                                                null -> Action.TogglePublicationSubscription.Subscribe(
-                                                    publicationUri = action.publication.uri,
-                                                )
-                                                else -> Action.TogglePublicationSubscription.Unsubscribe(
-                                                    subscriptionUri = subscription.uri,
-                                                )
-                                            },
-                                        )
+                                    is PostAction.RecordInteraction ->
+                                        actions(Action.RecordInteraction(action))
 
                                     else -> Unit
                                 }
@@ -1773,11 +1670,6 @@ private class HeaderState(
     val avatarPadding get() = 4.dp * max(0f, 1f - progress)
     val avatarAlignmentLerp get() = progress
     val tabsHorizontalPadding get() = sizeToken + (CollapsedProfilePhotoSize * progress)
-
-    fun bioOffset() = IntOffset(
-        x = 0,
-        y = -headerState.translation.roundToInt(),
-    )
 
     fun avatarOffset(
         density: Density,

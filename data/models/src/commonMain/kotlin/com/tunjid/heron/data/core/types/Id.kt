@@ -165,6 +165,30 @@ value class StandardSubscriptionId(
 
 @Serializable
 @JvmInline
+value class StandardRecommendationId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
+
+@Serializable
+@JvmInline
+value class EventId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
+
+@Serializable
+@JvmInline
+value class RsvpId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
+
+@Serializable
+@JvmInline
 value class AlbumId(
     override val id: String,
 ) : Id {
