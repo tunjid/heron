@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastRoundToInt
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.heron.atmosphereapp.ui.AtmosphereAppHeader
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.link
 import com.tunjid.heron.data.core.types.RecordUri
@@ -402,7 +403,10 @@ private fun UriHandler.openAtmoRsvpLink(
 ) {
     runCatching {
         openUri(
-            "https://atmo.rsvp/p/${recordUri.profileId().id}/e/${recordUri.recordKey.value}",
+            Event.atmoRsvpLink(
+                authorId = recordUri.profileId(),
+                recordKey = recordUri.recordKey,
+            ).uri,
         )
     }
 }

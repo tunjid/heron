@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.Post
@@ -33,9 +34,12 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.asLinkPreview
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
+import com.tunjid.heron.data.core.types.profileId
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.data.ml.language.LanguageDetector
@@ -77,6 +81,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Stable
@@ -263,8 +268,23 @@ private fun launchEmbeddedRecordMutations(
     embeddedRecordUri: EmbeddableRecordUri?,
     recordRepository: RecordRepository,
 ) {
-    embeddedRecordUri?.let { uri ->
-        recordRepository.embeddableRecord(uri).launchedCollect {
+    when (embeddedRecordUri) {
+        null -> Unit
+        // Posts can't embed events, so share them as a link card to their atmo.rsvp page.
+        is EventUri -> productionScope.launch {
+            try {
+                state.isLoadingLinkPreview = true
+                state.linkPreview = recordRepository.externalLinkPreview(
+                    Event.atmoRsvpLink(
+                        authorId = embeddedRecordUri.profileId(),
+                        recordKey = embeddedRecordUri.recordKey,
+                    ),
+                )
+            } finally {
+                state.isLoadingLinkPreview = false
+            }
+        }
+        else -> recordRepository.embeddableRecord(embeddedRecordUri).launchedCollect {
             state.embeddedRecord = it as? Record.Embeddable.Native
         }
     }

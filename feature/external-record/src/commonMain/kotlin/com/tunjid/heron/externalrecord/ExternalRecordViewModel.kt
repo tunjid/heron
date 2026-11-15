@@ -29,6 +29,7 @@ import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.recordUriOrNull
+import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -60,7 +61,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 
 @Stable
@@ -87,6 +91,7 @@ class ActualExternalRecordViewModel(
     @AssistedInject
     constructor(
         navActions: (NavigationMutation) -> Unit,
+        authRepository: AuthRepository,
         profileRepository: ProfileRepository,
         recordRepository: RecordRepository,
         timelineRepository: TimelineRepository,
@@ -106,6 +111,7 @@ class ActualExternalRecordViewModel(
                     state = state,
                     route = route,
                     viewModelScope = scope,
+                    authRepository = authRepository,
                     profileRepository = profileRepository,
                     recordRepository = recordRepository,
                     timelineRepository = timelineRepository,
@@ -149,6 +155,7 @@ private suspend fun launchRecordMutations(
     state: State.Mutable,
     route: Route,
     viewModelScope: CoroutineScope,
+    authRepository: AuthRepository,
     profileRepository: ProfileRepository,
     recordRepository: RecordRepository,
     timelineRepository: TimelineRepository,
@@ -183,36 +190,53 @@ private suspend fun launchRecordMutations(
             }
         }
         is EventUri -> {
-            if (state.stateHolders.isEmpty()) {
-                state.stateHolders = EventRsvpStatuses.map { status ->
-                    ExternalRecordStateHolders.Rsvps(
-                        mutator = viewModelScope.rsvpsStateHolder(
-                            eventUri = recordUri,
-                            status = status,
-                            recordRepository = recordRepository,
-                        ),
-                    )
-                }
-            }
-            recordRepository.event(recordUri).launchedCollect { event ->
+            combine(
+                flow = authRepository.signedInUser
+                    .map { it != null }
+                    .distinctUntilChanged(),
+                flow2 = recordRepository.event(recordUri),
+                transform = ::Pair,
+            ).launchedCollect { (isSignedIn, event) ->
                 state.record = event
 
-                val commentsPostUri = event.bskyPostRef
+                // Listing RSVPs needs a signed in user, so signed out users only see comments.
+                val rsvps = if (isSignedIn) state.stateHolders
+                    .filterIsInstance<ExternalRecordStateHolders.Rsvps>()
+                    .ifEmpty {
+                        EventRsvpStatuses.map { status ->
+                            ExternalRecordStateHolders.Rsvps(
+                                mutator = viewModelScope.rsvpsStateHolder(
+                                    eventUri = recordUri,
+                                    status = status,
+                                    recordRepository = recordRepository,
+                                ),
+                            )
+                        }
+                    }
+                else emptyList()
+
+                val comments = event.bskyPostRef
                     ?.takeIf(Event.BskyPostRef::showComments)
-                    ?.uri
-                    ?: return@launchedCollect
-                if (state.stateHolders.none { it is ExternalRecordStateHolders.Comments }) {
-                    state.stateHolders += ExternalRecordStateHolders.Comments(
-                        mutator = viewModelScope.commentsStateHolder(
-                            postUri = commentsPostUri,
-                            timelineRepository = timelineRepository,
-                            userDataRepository = userDataRepository,
-                        ),
-                    )
-                }
+                    ?.let { bskyPostRef ->
+                        state.stateHolders
+                            .filterIsInstance<ExternalRecordStateHolders.Comments>()
+                            .firstOrNull()
+                            ?: ExternalRecordStateHolders.Comments(
+                                mutator = viewModelScope.commentsStateHolder(
+                                    postUri = bskyPostRef.uri,
+                                    timelineRepository = timelineRepository,
+                                    userDataRepository = userDataRepository,
+                                ),
+                            )
+                    }
+
+                val stateHolders = rsvps + listOfNotNull(comments)
+                if (stateHolders != state.stateHolders) state.stateHolders = stateHolders
             }
         }
-        else -> Unit
+        else -> {
+            Unit
+        }
     }
 }
 
