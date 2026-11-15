@@ -74,6 +74,7 @@ import com.tunjid.heron.ui.icons.regular.LocationOn
 import com.tunjid.heron.ui.icons.regular.Star
 import com.tunjid.heron.ui.rememberLatchedState
 import com.tunjid.heron.ui.shapes.roundedRectangle
+import com.tunjid.heron.ui.titleSharedElementKey
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.event_mode_hybrid
 import heron.ui.timeline.generated.resources.event_mode_in_person
@@ -111,22 +112,52 @@ fun Event(
             currentStatus = currentStatus,
         )
         event.locationText()?.let {
-            EventInfoRow(
-                icon = HeronIcons.Regular.LocationOn,
-                text = it,
+            EventSharedElement(
+                key = event.sharedElementKey(
+                    prefix = sharedElementPrefix,
+                    part = "location",
+                ),
+            ) {
+                EventInfoRow(
+                    icon = HeronIcons.Regular.LocationOn,
+                    text = it,
+                )
+            }
+        }
+        EventSharedElement(
+            key = event.sharedElementKey(
+                prefix = sharedElementPrefix,
+                part = "rsvp",
+            ),
+        ) {
+            RsvpRow(
+                answeredStatus = latchedStatus.value
+                    ?.takeIf(RsvpOptions::containsKey),
+                enabled = canRsvp,
+                onStatusSelected = { status ->
+                    if (latchedStatus.isCurrent) {
+                        latchedStatus.latch(status)
+                        onRsvpClicked(event, status)
+                    }
+                },
             )
         }
-        RsvpRow(
-            answeredStatus = latchedStatus.value
-                ?.takeIf(RsvpOptions::containsKey),
-            enabled = canRsvp,
-            onStatusSelected = { status ->
-                if (latchedStatus.isCurrent) {
-                    latchedStatus.latch(status)
-                    onRsvpClicked(event, status)
-                }
-            },
-        )
+    }
+}
+
+@Composable
+private fun PaneTransitionScope.EventSharedElement(
+    key: String,
+    content: @Composable () -> Unit,
+) {
+    PaneStickySharedElement(
+        boundsTransform = sharedElementBoundsTransform,
+        clipInOverlayDuringTransition = paneOverlayClip,
+        sharedContentState = rememberSharedContentState(
+            key = key,
+        ),
+    ) {
+        content()
     }
 }
 
@@ -185,31 +216,52 @@ private fun PaneTransitionScope.EventInfo(
         Column(
             verticalArrangement = spacedBy(4.dp),
         ) {
-            Text(
-                text = event.name,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-            )
-            event.startDateTime()?.let { startDateTime ->
-                EventInfoRow(
-                    icon = HeronIcons.Regular.CalendarMonth,
-                    text = startDateTime,
+            EventSharedElement(
+                key = titleSharedElementKey(
+                    prefix = sharedElementPrefix,
+                    type = event.uri,
+                ),
+            ) {
+                Text(
+                    text = event.name,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
-            EventInfoRow(
-                icon = HeronIcons.Regular.Group,
-                text = stringResource(
-                    Res.string.event_rsvp_counts,
-                    event.goingCount + latchedStatus.value.countDelta(
-                        currentStatus = currentStatus,
-                        status = Rsvp.Status.Going,
+            event.startDateTime()?.let { startDateTime ->
+                EventSharedElement(
+                    key = event.sharedElementKey(
+                        prefix = sharedElementPrefix,
+                        part = "date",
                     ),
-                    event.interestedCount + latchedStatus.value.countDelta(
-                        currentStatus = currentStatus,
-                        status = Rsvp.Status.Interested,
-                    ),
+                ) {
+                    EventInfoRow(
+                        icon = HeronIcons.Regular.CalendarMonth,
+                        text = startDateTime,
+                    )
+                }
+            }
+            EventSharedElement(
+                key = event.sharedElementKey(
+                    prefix = sharedElementPrefix,
+                    part = "counts",
                 ),
-            )
+            ) {
+                EventInfoRow(
+                    icon = HeronIcons.Regular.Group,
+                    text = stringResource(
+                        Res.string.event_rsvp_counts,
+                        event.goingCount + latchedStatus.value.countDelta(
+                            currentStatus = currentStatus,
+                            status = Rsvp.Status.Going,
+                        ),
+                        event.interestedCount + latchedStatus.value.countDelta(
+                            currentStatus = currentStatus,
+                            status = Rsvp.Status.Interested,
+                        ),
+                    ),
+                )
+            }
         }
     }
 }
@@ -455,5 +507,10 @@ private val Event.Mode.label: StringResource?
         Event.Mode.Hybrid -> Res.string.event_mode_hybrid
         Event.Mode.Unknown -> null
     }
+
+private fun Event.sharedElementKey(
+    prefix: String,
+    part: String,
+): String = "$prefix-${uri.uri}-$part"
 
 private val EventImageShape = PolygonShape.roundedRectangle(percent = 0.25f)
