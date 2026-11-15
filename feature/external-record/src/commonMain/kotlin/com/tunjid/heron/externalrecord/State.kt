@@ -18,10 +18,19 @@ package com.tunjid.heron.externalrecord
 
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Event
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.Rsvp
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.EventUri
+import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.repository.records.EventRsvpsQuery
 import com.tunjid.heron.data.repository.records.StandardPublicationDocumentsQuery
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
@@ -51,6 +60,8 @@ interface State {
         @Transient
         val stateHolders: List<ExternalRecordStateHolders> = emptyList(),
         @Transient
+        val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
 
@@ -58,7 +69,8 @@ interface State {
         operator fun invoke(
             route: Route,
         ): Immutable = Immutable(
-            record = route.model<StandardPublication>(),
+            record = route.model<StandardPublication>()
+                ?: route.model<Event>(),
             sharedElementPrefix = route.sharedElementPrefix,
         )
     }
@@ -73,19 +85,41 @@ sealed class ExternalRecordStateHolders {
     ) : ExternalRecordStateHolders(),
         DocumentsStateHolder by mutator
 
+    @Stable
+    class Rsvps(
+        val mutator: RsvpsStateHolder,
+    ) : ExternalRecordStateHolders(),
+        RsvpsStateHolder by mutator
+
+    @Stable
+    class Comments(
+        val mutator: CommentsStateHolder,
+    ) : ExternalRecordStateHolders(),
+        CommentsStateHolder by mutator
+
     val key
         get() = when (this) {
             is Documents -> "Documents"
+            is Rsvps -> "Rsvps-${state.status.id}"
+            is Comments -> "Comments"
         }
 
     val isRefreshing: Boolean
         get() = when (this) {
             is Documents -> state.isRefreshing
+            is Rsvps -> state.isRefreshing
+            is Comments -> false
         }
 
     fun refresh() = when (this) {
         is Documents -> accept(
             TilingState.Action.Refresh,
+        )
+        is Rsvps -> accept(
+            TilingState.Action.Refresh,
+        )
+        is Comments -> accept(
+            CommentsAction.Refresh,
         )
     }
 }
@@ -121,7 +155,81 @@ interface DocumentsTilingState : TilingState<StandardPublicationDocumentsQuery, 
     }
 }
 
+typealias RsvpsStateHolder = ActionSuspendingStateMutator<TilingState.Action, RsvpsTilingState>
+
+@Stable
+@Snapshottable
+interface RsvpsTilingState : TilingState<EventRsvpsQuery, Rsvp> {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val eventUri: EventUri,
+        val status: Rsvp.Status,
+        @Transient
+        override val tilingData: TilingState.Data<EventRsvpsQuery, Rsvp> = TilingState.Data(
+            currentQuery = EventRsvpsQuery(
+                eventUri = eventUri,
+                status = status,
+                data = CursorQuery.Data(
+                    page = 0,
+                    cursorAnchor = Clock.System.now(),
+                ),
+            ),
+        ),
+    ) : RsvpsTilingState
+
+    companion object {
+        operator fun invoke(
+            eventUri: EventUri,
+            status: Rsvp.Status,
+        ): Immutable = Immutable(
+            eventUri = eventUri,
+            status = status,
+        )
+    }
+}
+
+typealias CommentsStateHolder = ActionSuspendingStateMutator<CommentsAction, CommentsState>
+
+@Stable
+@Snapshottable
+interface CommentsState {
+
+    @SnapshotSpec
+    data class Immutable(
+        val postUri: PostUri,
+        val items: List<TimelineItem> = emptyList(),
+    ) : CommentsState
+
+    companion object {
+        operator fun invoke(
+            postUri: PostUri,
+        ): Immutable = Immutable(
+            postUri = postUri,
+        )
+    }
+}
+
+sealed class CommentsAction {
+    data object Refresh : CommentsAction()
+}
+
 sealed class Action(val key: String) {
+
+    data class BlockAccount(
+        val signedInProfileId: ProfileId,
+        val profileId: ProfileId,
+    ) : Action(key = "BlockAccount")
+
+    data class MuteAccount(
+        val signedInProfileId: ProfileId,
+        val profileId: ProfileId,
+    ) : Action(key = "MuteAccount")
+
+    data class DeleteRecord(
+        val recordUri: RecordUri,
+    ) : Action(key = "DeleteRecord")
 
     data class SnackbarDismissed(
         val message: Memo,

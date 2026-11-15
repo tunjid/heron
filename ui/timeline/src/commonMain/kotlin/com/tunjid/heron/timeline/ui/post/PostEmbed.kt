@@ -34,6 +34,7 @@ import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.AppliedLabels.Companion.withLabels
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
@@ -115,7 +116,11 @@ fun PostEmbed(
                     isBlurred = isBlurred,
                     paneTransitionScope = paneTransitionScope,
                     onClick = {
-                        uriHandler.openUri(embed.uri.uri)
+                        // Events open in app, everything else opens its link.
+                        when (externalEmbeddedRecord) {
+                            is Event -> onEmbeddedRecordClicked(externalEmbeddedRecord)
+                            else -> uriHandler.openUri(embed.uri.uri)
+                        }
                     },
                     onRecordInteraction = onRecordInteraction,
                 )
