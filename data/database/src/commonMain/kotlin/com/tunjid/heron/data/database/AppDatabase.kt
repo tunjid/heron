@@ -112,6 +112,7 @@ import com.tunjid.heron.data.database.migrations.Migration33To34OnUpdateForeignK
 import com.tunjid.heron.data.database.migrations.Migration37To38StandardSubscriptionViewerIds
 import com.tunjid.heron.data.database.migrations.Migration42To43RockskyCreatorId
 import com.tunjid.heron.data.database.migrations.Migration45To46GroupConversations
+import com.tunjid.heron.data.database.migrations.Migration57To58RsvpAuthorAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration5To6NonNullPostUriAndAuthor
 import com.tunjid.heron.data.database.migrations.Migration6To7PostViewerStatisticsAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration8To9ProfileViewersAutoMigration
@@ -120,7 +121,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 57,
+    version = 58,
     entities = [
         BookmarkEntity::class,
         PostDraftEntity::class,
@@ -296,6 +297,12 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 55, to = 56),
         // Add event thumbnails
         AutoMigration(from = 56, to = 57),
+        // Key RSVPs by their author rather than the viewer, and add event Bluesky post refs
+        AutoMigration(
+            from = 57,
+            to = 58,
+            spec = Migration57To58RsvpAuthorAutoMigration::class,
+        ),
     ],
     exportSchema = true,
 )

@@ -27,6 +27,8 @@ import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.EventId
 import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlin.time.Instant
 
@@ -69,6 +71,9 @@ data class EventEntity(
     val thumbnail: ImageUri?,
     val thumbnailWidth: Long?,
     val thumbnailHeight: Long?,
+    val bskyPostUri: PostUri?,
+    val bskyPostCid: PostId?,
+    val bskyPostShowComments: Boolean?,
 )
 
 data class PopulatedEventEntity(
@@ -78,6 +83,8 @@ data class PopulatedEventEntity(
     val author: ProfileEntity,
     @Embedded(prefix = "rsvp_")
     val rsvp: RsvpEntity?,
+    @Embedded(prefix = "rsvpAuthor_")
+    val rsvpAuthor: ProfileEntity?,
 ) : PopulatedRecordEntity {
     override val recordUri: EmbeddableRecordUri
         get() = entity.uri
@@ -108,7 +115,18 @@ fun PopulatedEventEntity.asExternalModel() = Event(
             if (width > 0 && height > 0) width.toFloat() / height else null
         }
     },
-    rsvp = rsvp?.asExternalModel(),
+    rsvp = rsvp?.asExternalModel(
+        author = rsvpAuthor.asExternalModel(),
+    ),
+    bskyPostRef = entity.bskyPostUri?.let { uri ->
+        entity.bskyPostCid?.let { cid ->
+            Event.BskyPostRef(
+                uri = uri,
+                cid = cid,
+                showComments = entity.bskyPostShowComments == true,
+            )
+        }
+    },
 )
 
 private val EmptyPlaces = Event.Places(

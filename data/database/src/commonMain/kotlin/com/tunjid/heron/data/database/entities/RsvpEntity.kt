@@ -16,9 +16,12 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import androidx.room.Relation
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Rsvp
 import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -30,7 +33,7 @@ import kotlin.time.Instant
     tableName = "rsvps",
     primaryKeys = [
         "eventUri",
-        "viewingProfileId",
+        "authorId",
     ],
     foreignKeys = [
         ForeignKey(
@@ -43,7 +46,7 @@ import kotlin.time.Instant
         ForeignKey(
             entity = ProfileEntity::class,
             parentColumns = ["did"],
-            childColumns = ["viewingProfileId"],
+            childColumns = ["authorId"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE,
         ),
@@ -51,7 +54,7 @@ import kotlin.time.Instant
     indices = [
         Index(value = ["uri"]),
         Index(value = ["eventUri"]),
-        Index(value = ["viewingProfileId"]),
+        Index(value = ["authorId"]),
         Index(value = ["sortedAt"]),
     ],
 )
@@ -59,20 +62,37 @@ data class RsvpEntity(
     val uri: RsvpUri,
     val cid: RsvpId?,
     val eventUri: EventUri,
-    val viewingProfileId: ProfileId,
+    val authorId: ProfileId,
     val status: String,
     val sortedAt: Instant,
 ) {
     data class Deletion(
         val eventUri: EventUri,
-        val viewingProfileId: ProfileId,
+        val authorId: ProfileId,
     )
 }
 
-internal fun RsvpEntity.asExternalModel() = Rsvp(
+data class PopulatedRsvpEntity(
+    @Embedded
+    val entity: RsvpEntity,
+    @Relation(
+        parentColumn = "authorId",
+        entityColumn = "did",
+    )
+    val author: ProfileEntity?,
+)
+
+fun PopulatedRsvpEntity.asExternalModel() = entity.asExternalModel(
+    author = author.asExternalModel(),
+)
+
+internal fun RsvpEntity.asExternalModel(
+    author: Profile,
+) = Rsvp(
     uri = uri,
     cid = cid,
     eventUri = eventUri,
     status = Rsvp.Status.fromId(status),
     sortedAt = sortedAt,
+    author = author,
 )

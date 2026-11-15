@@ -22,6 +22,8 @@ import com.tunjid.heron.data.core.types.EventId
 import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RsvpId
 import com.tunjid.heron.data.core.types.RsvpUri
@@ -29,6 +31,7 @@ import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.database.entities.EventEntity
 import com.tunjid.heron.data.database.entities.RsvpEntity
+import com.tunjid.heron.data.network.models.stubProfileEntity
 import com.tunjid.heron.data.utilities.safeDecodeAs
 import com.tunjid.heron.data.utilities.tidInstant
 import community.lexicon.calendar.Event as LexiconEvent
@@ -37,6 +40,7 @@ import community.lexicon.calendar.EventUri as LexiconEventUri
 import community.lexicon.calendar.Rsvp as LexiconRsvp
 import kotlin.time.Instant
 import social.heron.calendar.EventView
+import social.heron.calendar.RsvpView
 
 internal fun MultipleEntitySaver.add(
     eventView: EventView,
@@ -74,28 +78,44 @@ internal fun MultipleEntitySaver.add(
             thumbnail = eventView.thumbnailUrl?.uri?.let(::ImageUri),
             thumbnailWidth = eventView.thumbnailAspectRatio?.width,
             thumbnailHeight = eventView.thumbnailAspectRatio?.height,
+            bskyPostUri = eventView.bskyPostRef?.uri?.atUri?.let(::PostUri),
+            bskyPostCid = eventView.bskyPostRef?.cid?.cid?.let(::PostId),
+            bskyPostShowComments = eventView.bskyPostRef?.showComments,
         ),
     )
 
     viewingProfileId?.let { profileId ->
         eventView.viewerRsvp?.let {
-            add(
-                RsvpEntity(
-                    uri = it.uri.atUri.let(::RsvpUri),
-                    cid = it.cid.cid.let(::RsvpId),
-                    eventUri = eventUri,
-                    viewingProfileId = profileId,
-                    status = it.status,
-                    sortedAt = it.sortedAt,
-                ),
-            )
+            add(rsvpView = it)
         } ?: remove(
             RsvpEntity.Deletion(
                 eventUri = eventUri,
-                viewingProfileId = profileId,
+                authorId = profileId,
             ),
         )
     }
+}
+
+internal fun MultipleEntitySaver.add(
+    rsvpView: RsvpView,
+) {
+    add(rsvpView.author)
+    add(
+        stubEventEntity(
+            eventUri = rsvpView.eventUri.atUri.let(::EventUri),
+            name = "",
+        ),
+    )
+    add(
+        RsvpEntity(
+            uri = rsvpView.uri.atUri.let(::RsvpUri),
+            cid = rsvpView.cid.cid.let(::RsvpId),
+            eventUri = rsvpView.eventUri.atUri.let(::EventUri),
+            authorId = rsvpView.author.did.did.let(::ProfileId),
+            status = rsvpView.status,
+            sortedAt = rsvpView.sortedAt,
+        ),
+    )
 }
 
 internal fun MultipleEntitySaver.add(
@@ -103,9 +123,10 @@ internal fun MultipleEntitySaver.add(
     rsvpCid: RsvpId?,
     rsvp: LexiconRsvp,
     sortedAt: Instant,
-    viewingProfileId: ProfileId,
+    authorId: ProfileId,
 ) {
     val eventUri = EventUri(rsvp.subject.uri.atUri)
+    add(stubProfileEntity(profileId = authorId))
     add(
         stubEventEntity(
             eventUri = eventUri,
@@ -117,7 +138,7 @@ internal fun MultipleEntitySaver.add(
             uri = rsvpUri,
             cid = rsvpCid,
             eventUri = eventUri,
-            viewingProfileId = viewingProfileId,
+            authorId = authorId,
             status = rsvp.status,
             sortedAt = sortedAt,
         ),
@@ -150,6 +171,9 @@ internal fun stubEventEntity(
         thumbnail = null,
         thumbnailWidth = null,
         thumbnailHeight = null,
+        bskyPostUri = null,
+        bskyPostCid = null,
+        bskyPostShowComments = null,
     )
 }
 

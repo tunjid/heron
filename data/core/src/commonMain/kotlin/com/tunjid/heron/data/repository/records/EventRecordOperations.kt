@@ -28,9 +28,11 @@ import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.RsvpId
 import com.tunjid.heron.data.core.types.RsvpUri
+import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.EventDao
 import com.tunjid.heron.data.database.entities.PopulatedEventEntity
+import com.tunjid.heron.data.database.entities.PopulatedRsvpEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.network.NetworkService
@@ -43,11 +45,13 @@ import com.tunjid.heron.data.repository.singleSessionFlow
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.CursorQueryRefreshTracker
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.authorEventsIdentity
+import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.eventRsvpsIdentity
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.rsvpedEventsIdentity
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.multipleEntitysaver.stubProfileEntity
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
@@ -73,9 +77,18 @@ import social.heron.calendar.GetEventsQueryParams
 import social.heron.calendar.GetEventsResponse
 import social.heron.calendar.GetRsvpedEventsQueryParams
 import social.heron.calendar.GetRsvpedEventsResponse
+import social.heron.calendar.GetRsvpsQueryParams
+import social.heron.calendar.GetRsvpsResponse
 
 @Serializable
 data class RsvpedEventsQuery(
+    val status: Rsvp.Status?,
+    override val data: CursorQuery.Data,
+) : CursorQuery
+
+@Serializable
+data class EventRsvpsQuery(
+    val eventUri: EventUri,
     val status: Rsvp.Status?,
     override val data: CursorQuery.Data,
 ) : CursorQuery
@@ -95,6 +108,11 @@ interface EventRecordOperations {
         query: RsvpedEventsQuery,
         cursor: Cursor,
     ): Flow<CursorList<Event>>
+
+    fun rsvps(
+        query: EventRsvpsQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<Rsvp>>
 
     suspend fun putRsvp(
         put: Rsvp.Put,
@@ -242,6 +260,59 @@ internal class OfflineFirstEventRecordOperations(
             .filterNotNull()
             .flowOn(ioDispatcher)
 
+    override fun rsvps(
+        query: EventRsvpsQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<Rsvp>> =
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            combine(
+                eventDao.rsvps(
+                    eventUri = query.eventUri,
+                    status = query.status?.id,
+                    limit = query.data.limit,
+                    offset = query.data.offset,
+                )
+                    .distinctUntilChangedMap { populatedRsvpEntities ->
+                        populatedRsvpEntities.map(PopulatedRsvpEntity::asExternalModel)
+                    },
+                networkService.nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        getRsvps(
+                            params = GetRsvpsQueryParams(
+                                uri = query.eventUri.uri.let(::AtUri),
+                                status = query.status?.id,
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            ),
+                        )
+                    },
+                    nextCursor = GetRsvpsResponse::cursor,
+                    onResponse = {
+                        val shouldRefresh = cursorQueryRefreshTracker
+                            .isFirstPageForDifferentAnchor(
+                                query = query,
+                                identity = query::eventRsvpsIdentity,
+                            )
+                        multipleEntitySaverProvider.saveInTransaction {
+                            if (shouldRefresh) {
+                                eventDao.deleteRsvpsForEvent(
+                                    eventUri = query.eventUri,
+                                    viewingProfileId = signedInProfileId.id,
+                                    status = query.status?.id,
+                                )
+                            }
+                            rsvps.forEach(::add)
+                        }
+                    },
+                ),
+                ::CursorList,
+            )
+                .distinctUntilChanged()
+        }
+            .filterNotNull()
+            .flowOn(ioDispatcher)
+
     override suspend fun putRsvp(
         put: Rsvp.Put,
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
@@ -269,12 +340,15 @@ internal class OfflineFirstEventRecordOperations(
             )
         }.mapCatchingUnlessCancelled { response ->
             multipleEntitySaverProvider.saveInTransaction {
+                val rsvpUri = response.uri.atUri.let(::RsvpUri)
+                val profileId = rsvpUri.profileId()
+                add(stubProfileEntity(profileId.id.let(::Did)))
                 add(
                     rsvpUri = response.uri.atUri.let(::RsvpUri),
                     rsvpCid = response.cid.cid.let(::RsvpId),
                     rsvp = rsvp,
                     sortedAt = put.sortedAt,
-                    viewingProfileId = signedInProfileId,
+                    authorId = profileId,
                 )
 
                 eventDao.adjustRsvpCounts(

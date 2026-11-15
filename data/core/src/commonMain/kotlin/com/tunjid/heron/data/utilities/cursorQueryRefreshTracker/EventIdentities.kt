@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.utilities.cursorQueryRefreshTracker
 
 import com.tunjid.heron.data.repository.ProfilesQuery
+import com.tunjid.heron.data.repository.records.EventRsvpsQuery
 import com.tunjid.heron.data.repository.records.RsvpedEventsQuery
 
 internal fun ProfilesQuery.authorEventsIdentity(): String =
@@ -24,3 +25,6 @@ internal fun ProfilesQuery.authorEventsIdentity(): String =
 
 internal fun RsvpedEventsQuery.rsvpedEventsIdentity(): String =
     "event.rsvpedEvents:${status?.id}"
+
+internal fun EventRsvpsQuery.eventRsvpsIdentity(): String =
+    "event.rsvps:${eventUri.uri}:${status?.id}"

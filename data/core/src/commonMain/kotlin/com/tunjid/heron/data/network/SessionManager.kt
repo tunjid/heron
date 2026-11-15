@@ -678,6 +678,7 @@ private val HeronProxyPaths = listOf(
     "social.heron.calendar.getEvent",
     "social.heron.calendar.getEvents",
     "social.heron.calendar.getRsvpedEvents",
+    "social.heron.calendar.getRsvps",
     "dev.tunji.heron.getModelUrl",
     "social.heron.graze.createFeed",
     "social.heron.graze.editFeed",
