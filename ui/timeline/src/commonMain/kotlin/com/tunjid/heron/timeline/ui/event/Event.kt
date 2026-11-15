@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.timeline.ui.event
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,8 +44,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -70,12 +73,19 @@ import com.tunjid.heron.ui.icons.regular.CheckCircle
 import com.tunjid.heron.ui.icons.regular.Delete
 import com.tunjid.heron.ui.icons.regular.ExpandMore
 import com.tunjid.heron.ui.icons.regular.Group
+import com.tunjid.heron.ui.icons.regular.Groups
+import com.tunjid.heron.ui.icons.regular.JoinFull
+import com.tunjid.heron.ui.icons.regular.Link
 import com.tunjid.heron.ui.icons.regular.LocationOn
 import com.tunjid.heron.ui.icons.regular.Star
+import com.tunjid.heron.ui.icons.regular.Timer
+import com.tunjid.heron.ui.icons.regular.Videocam
+import com.tunjid.heron.ui.icons.regular.Warning
 import com.tunjid.heron.ui.rememberLatchedState
 import com.tunjid.heron.ui.shapes.roundedRectangle
 import com.tunjid.heron.ui.titleSharedElementKey
 import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.event_ends_at
 import heron.ui.timeline.generated.resources.event_mode_hybrid
 import heron.ui.timeline.generated.resources.event_mode_in_person
 import heron.ui.timeline.generated.resources.event_mode_virtual
@@ -84,6 +94,9 @@ import heron.ui.timeline.generated.resources.event_rsvp_going
 import heron.ui.timeline.generated.resources.event_rsvp_interested
 import heron.ui.timeline.generated.resources.event_rsvp_not_going
 import heron.ui.timeline.generated.resources.event_rsvp_remove
+import heron.ui.timeline.generated.resources.event_status_cancelled
+import heron.ui.timeline.generated.resources.event_status_postponed
+import heron.ui.timeline.generated.resources.event_status_rescheduled
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -98,7 +111,7 @@ fun Event(
 ) = with(paneTransitionScope) {
     val currentStatus = event.rsvp?.status
     val latchedStatus = rememberLatchedState(currentStatus)
-    val canRsvp = event.cid != null
+    val canRsvp = event.cid != null && event.status != Event.Status.Cancelled
 
     Column(
         modifier = modifier,
@@ -158,6 +171,67 @@ private fun PaneTransitionScope.EventSharedElement(
         ),
     ) {
         content()
+    }
+}
+
+/**
+ * Details of an [Event] beyond what its card shows: when it ends, how it's held,
+ * every link to join or learn more, and any further locations.
+ */
+@Composable
+fun EventDetails(
+    modifier: Modifier = Modifier,
+    event: Event,
+) {
+    val uriHandler = LocalUriHandler.current
+    // The card shows the first location, so only the rest are listed here.
+    val shownLocation = event.places.locations.firstOrNull { it.displayText() != null }
+    val links = event.places.locations
+        .filterIsInstance<Event.Location.Online>()
+        .map { it.uri to (it.name.nonBlank() ?: it.uri.domain) } +
+        event.places.links.map { it.uri to (it.name.nonBlank() ?: it.uri.domain) }
+    val otherLocations = event.places.locations
+        .filterNot { it is Event.Location.Online || it == shownLocation }
+        .mapNotNull(Event.Location::displayText)
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = spacedBy(8.dp),
+    ) {
+        event.endsAt?.let { endsAt ->
+            EventInfoRow(
+                icon = HeronIcons.Regular.Timer,
+                text = stringResource(
+                    Res.string.event_ends_at,
+                    "${endsAt.formatWeekdayDate()}, ${endsAt.formatHour()}",
+                ),
+            )
+        }
+        event.mode.icon?.let { modeIcon ->
+            event.mode.label?.let { modeLabel ->
+                EventInfoRow(
+                    icon = modeIcon,
+                    text = stringResource(modeLabel),
+                )
+            }
+        }
+        otherLocations.forEach { location ->
+            EventInfoRow(
+                icon = HeronIcons.Regular.LocationOn,
+                text = location,
+            )
+        }
+        links.forEach { (uri, label) ->
+            EventInfoRow(
+                modifier = Modifier
+                    .clickable {
+                        runCatching { uriHandler.openUri(uri.uri) }
+                    },
+                icon = HeronIcons.Regular.Link,
+                text = label,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
     }
 }
 
@@ -241,6 +315,23 @@ private fun PaneTransitionScope.EventInfo(
                     )
                 }
             }
+            event.status.label?.let { statusLabel ->
+                EventSharedElement(
+                    key = event.sharedElementKey(
+                        prefix = sharedElementPrefix,
+                        part = "status",
+                    ),
+                ) {
+                    EventInfoRow(
+                        icon = HeronIcons.Regular.Warning,
+                        text = stringResource(statusLabel),
+                        color = when (event.status) {
+                            Event.Status.Cancelled -> MaterialTheme.colorScheme.error
+                            else -> MaterialTheme.colorScheme.tertiary
+                        },
+                    )
+                }
+            }
             EventSharedElement(
                 key = event.sharedElementKey(
                     prefix = sharedElementPrefix,
@@ -271,6 +362,7 @@ private fun EventInfoRow(
     modifier: Modifier = Modifier,
     icon: ImageVector,
     text: String,
+    color: Color = MaterialTheme.colorScheme.outline,
 ) {
     Row(
         modifier = modifier,
@@ -282,12 +374,12 @@ private fun EventInfoRow(
                 .size(18.dp),
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.outline,
+            tint = color,
         )
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline,
+            color = color,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -456,20 +548,21 @@ private fun Event.startDateTime(): String? {
 }
 
 private fun Event.locationText(): String? =
-    places.locations.firstNotNullOfOrNull { location ->
-        location.name ?: when (location) {
-            is Event.Location.Address -> listOfNotNull(
-                location.street,
-                location.locality,
-                location.region,
-                location.country,
-            ).joinToString(separator = ", ")
-            is Event.Location.Online -> location.uri.domain
-            is Event.Location.Geo -> "${location.latitude}, ${location.longitude}"
-            is Event.Location.Foursquare,
-            is Event.Location.H3,
-            -> null
-        }
+    places.locations.firstNotNullOfOrNull(Event.Location::displayText)
+
+private fun Event.Location.displayText(): String? =
+    name.nonBlank() ?: when (this) {
+        is Event.Location.Address -> listOfNotNull(
+            street,
+            locality,
+            region,
+            country,
+        ).joinToString(separator = ", ")
+        is Event.Location.Online -> uri.domain
+        is Event.Location.Geo -> "$latitude, $longitude"
+        is Event.Location.Foursquare,
+        is Event.Location.H3,
+        -> null
     }
 
 private class RsvpOption(
@@ -499,7 +592,6 @@ private val UnansweredRsvpStatuses = listOf(
 
 private val RsvpChipShape = RoundedCornerShape(16.dp)
 
-@Suppress("unused")
 private val Event.Mode.label: StringResource?
     get() = when (this) {
         Event.Mode.InPerson -> Res.string.event_mode_in_person
@@ -512,5 +604,30 @@ private fun Event.sharedElementKey(
     prefix: String,
     part: String,
 ): String = "$prefix-${uri.uri}-$part"
+
+private val Event.Mode.icon: ImageVector?
+    get() = when (this) {
+        Event.Mode.InPerson -> HeronIcons.Regular.Groups
+        Event.Mode.Virtual -> HeronIcons.Regular.Videocam
+        Event.Mode.Hybrid -> HeronIcons.Regular.JoinFull
+        Event.Mode.Unknown -> null
+    }
+
+/**
+ * Only statuses that change what attendees should expect are called out.
+ */
+private val Event.Status.label: StringResource?
+    get() = when (this) {
+        Event.Status.Cancelled -> Res.string.event_status_cancelled
+        Event.Status.Postponed -> Res.string.event_status_postponed
+        Event.Status.Rescheduled -> Res.string.event_status_rescheduled
+        Event.Status.Planned,
+        Event.Status.Scheduled,
+        Event.Status.Unknown,
+        -> null
+    }
+
+// Records may carry empty names, which should fall back like missing ones.
+private fun String?.nonBlank(): String? = this?.takeIf(String::isNotBlank)
 
 private val EventImageShape = PolygonShape.roundedRectangle(percent = 0.25f)

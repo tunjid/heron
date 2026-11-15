@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Event
@@ -65,6 +66,7 @@ import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.event.Event
+import com.tunjid.heron.timeline.ui.event.EventDetails
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
@@ -91,6 +93,9 @@ import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import heron.feature.external_record.generated.resources.Res
 import heron.feature.external_record.generated.resources.event_host
+import heron.feature.external_record.generated.resources.event_no_going
+import heron.feature.external_record.generated.resources.event_no_interested
+import heron.feature.external_record.generated.resources.event_no_not_going
 import kotlin.time.Clock
 import org.jetbrains.compose.resources.stringResource
 
@@ -120,6 +125,13 @@ internal fun EventHeader(
                 ),
             )
         },
+    )
+    EventDetails(
+        modifier = Modifier
+            .padding(
+                bottom = 8.dp,
+            ),
+        event = event,
     )
     event.description
         ?.takeIf(String::isNotBlank)
@@ -169,6 +181,8 @@ internal fun RsvpProfiles(
     modifier: Modifier = Modifier,
     paneScaffoldState: PaneScaffoldState,
     holder: RsvpsStateHolder,
+    // The event's own count for this status, to tell an empty list from one still loading.
+    responseCount: Long?,
     actions: (Action) -> Unit,
 ) {
     val state = holder.produceStateWithLifecycle()
@@ -212,6 +226,22 @@ internal fun RsvpProfiles(
                 )
             },
         )
+        if (rsvps.isEmpty() && responseCount == 0L) item(
+            key = EmptyRsvpsKey,
+        ) {
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        vertical = 48.dp,
+                    )
+                    .animateItem(),
+                text = stringResource(state.status.emptyRsvpsMessage()),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.outline,
+            )
+        }
     }
 
     listState.PivotedTilingEffect(
@@ -482,3 +512,13 @@ internal fun EventComments(
 
 private fun Profile.rsvpAvatarSharedElementKey(): String =
     "event-rsvp-${did.id}"
+
+private fun Rsvp.Status.emptyRsvpsMessage() = when (this) {
+    Rsvp.Status.Interested -> Res.string.event_no_interested
+    Rsvp.Status.NotGoing -> Res.string.event_no_not_going
+    Rsvp.Status.Going,
+    Rsvp.Status.Unknown,
+    -> Res.string.event_no_going
+}
+
+private const val EmptyRsvpsKey = "empty-rsvps"

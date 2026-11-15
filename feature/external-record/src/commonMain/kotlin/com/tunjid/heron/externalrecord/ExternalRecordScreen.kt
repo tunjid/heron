@@ -99,7 +99,10 @@ internal fun ExternalRecordScreen(
 ) {
     val pagerState = rememberPagerState { state.stateHolders.size }
     val scope = rememberCoroutineScope()
-    val hasTabs = state.record is Event || state.stateHolders.size > 1
+    val hasTabs = when (state.record) {
+        is Event -> state.stateHolders.isNotEmpty()
+        else -> state.stateHolders.size > 1
+    }
 
     val pinnedCollapsingHeaderState = rememberPinnedCollapsingHeaderState(
         pinnedHeight = when {
@@ -229,6 +232,9 @@ internal fun ExternalRecordScreen(
                         is ExternalRecordStateHolders.Rsvps -> RsvpProfiles(
                             paneScaffoldState = paneScaffoldState,
                             holder = stateHolder,
+                            responseCount = (state.record as? Event)?.responseCount(
+                                status = stateHolder.state.status,
+                            ),
                             actions = actions,
                         )
                         is ExternalRecordStateHolders.Comments -> EventComments(
@@ -362,3 +368,12 @@ internal fun RecordDescription(
 private const val ExternalRecordSharedElementPrefix = "external-record"
 
 private const val DescriptionMaxLines = 4
+
+private fun Event.responseCount(
+    status: Rsvp.Status,
+): Long? = when (status) {
+    Rsvp.Status.Going -> goingCount
+    Rsvp.Status.Interested -> interestedCount
+    Rsvp.Status.NotGoing -> notGoingCount
+    Rsvp.Status.Unknown -> null
+}

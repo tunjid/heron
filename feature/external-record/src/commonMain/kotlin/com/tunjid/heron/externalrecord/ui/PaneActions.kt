@@ -20,13 +20,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.externalrecord.Action
 import com.tunjid.heron.externalrecord.State
+import com.tunjid.heron.sheets.rememberEmbeddableRecordOptionsSheetState
 import com.tunjid.heron.timeline.ui.PostAction
+import com.tunjid.heron.timeline.ui.ShareRecordAppBarButton
+import com.tunjid.heron.timeline.utilities.TimelineStrings
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
+import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.record_event
+import heron.ui.timeline.generated.resources.share_record
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal fun PaneActions(
+internal fun PaneScaffoldState.PaneActions(
     state: State,
     actions: (Action) -> Unit,
 ) {
@@ -45,6 +58,43 @@ internal fun PaneActions(
                 )
             },
         )
+        is Event -> {
+            val recordOptionsSheetState = rememberEmbeddableRecordOptionsSheetState(
+                editTitle = null,
+                onEditClicked = {},
+                onShareInConversationClicked = { recordUri, conversation ->
+                    actions(
+                        Action.Navigate.To(
+                            conversationDestination(
+                                id = conversation.id,
+                                members = conversation.members,
+                                sharedElementPrefix = conversation.id.id,
+                                sharedUri = recordUri.asGenericUri(),
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
+                    )
+                },
+                onShareInPostClicked = { recordUri ->
+                    actions(
+                        Action.Navigate.To(
+                            composePostDestination(
+                                sharedUri = recordUri.asGenericUri(),
+                            ),
+                        ),
+                    )
+                },
+            )
+            ShareRecordAppBarButton(
+                contentDescription = stringResource(
+                    TimelineStrings.share_record,
+                    stringResource(CommonStrings.record_event),
+                ),
+                onShareClicked = {
+                    recordOptionsSheetState.showOptions(record.uri)
+                },
+            )
+        }
         else -> Unit
     }
 }

@@ -23,6 +23,8 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordKey
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
@@ -57,6 +59,18 @@ data class Event(
         )
 
     override val embeddableRecordUri: EmbeddableRecordUri = uri
+
+    companion object {
+        /**
+         * The atmo.rsvp page for an event. Heron resolves these links back to the event.
+         */
+        fun atmoRsvpLink(
+            authorId: ProfileId,
+            recordKey: RecordKey,
+        ): GenericUri = GenericUri(
+            uri = "https://atmo.rsvp/p/${authorId.id}/e/${recordKey.value}",
+        )
+    }
 
     @Serializable
     data class BskyPostRef(

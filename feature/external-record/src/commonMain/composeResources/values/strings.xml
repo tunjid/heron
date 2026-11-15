@@ -23,4 +23,7 @@
     <string name="event_not_going">Not going</string>
     <string name="event_comments">Comments</string>
     <string name="see_more">See more</string>
+    <string name="event_no_going">No one is going yet</string>
+    <string name="event_no_interested">No one is interested yet</string>
+    <string name="event_no_not_going">No one has said they can't go</string>
 </resources>

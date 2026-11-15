@@ -151,6 +151,10 @@
     <string name="event_mode_virtual">Online</string>
     <string name="event_mode_hybrid">Hybrid</string>
     <string name="event_rsvp_counts">%1$s going · %2$s interested</string>
+    <string name="event_status_cancelled">Cancelled</string>
+    <string name="event_status_postponed">Postponed</string>
+    <string name="event_status_rescheduled">Rescheduled</string>
+    <string name="event_ends_at">Ends %1$s</string>
     <string name="thread_gate_who_can_reply">Who can reply</string>
     <string name="thread_gate_anyone">Anyone</string>
     <string name="thread_gate_nobody">Nobody</string>

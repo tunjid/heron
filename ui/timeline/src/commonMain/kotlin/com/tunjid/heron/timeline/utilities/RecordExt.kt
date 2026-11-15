@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.AppliedLabels
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
@@ -187,10 +188,14 @@ fun EmbeddableRecordUri.shareUri(): GenericUri =
             is StarterPackUri -> "https://bsky.app/starter-pack/${profileId().id}/${recordKey.value}"
             is LabelerUri -> "https://bsky.app/profile/${profileId().id}"
             is PostUri -> "https://bsky.app/profile/${profileId().id}/post/${recordKey.value}"
-            // Standard site records and events are shared via their canonical AT URI for now.
+            // Standard site records are shared via their canonical AT URI for now.
             is StandardDocumentUri -> uri
             is StandardPublicationUri -> uri
-            is EventUri -> uri
+            // atmo.rsvp links open anywhere, and Heron resolves them back to the event.
+            is EventUri -> Event.atmoRsvpLink(
+                authorId = profileId(),
+                recordKey = recordKey,
+            ).uri
         },
     )
 
