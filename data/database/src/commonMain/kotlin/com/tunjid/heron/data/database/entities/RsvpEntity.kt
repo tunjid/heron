@@ -16,9 +16,12 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import androidx.room.Relation
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Rsvp
 import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -69,10 +72,27 @@ data class RsvpEntity(
     )
 }
 
-internal fun RsvpEntity.asExternalModel() = Rsvp(
+data class PopulatedRsvpEntity(
+    @Embedded
+    val entity: RsvpEntity,
+    @Relation(
+        parentColumn = "authorId",
+        entityColumn = "did",
+    )
+    val author: ProfileEntity?,
+)
+
+fun PopulatedRsvpEntity.asExternalModel() = entity.asExternalModel(
+    author = author.asExternalModel(),
+)
+
+internal fun RsvpEntity.asExternalModel(
+    author: Profile,
+) = Rsvp(
     uri = uri,
     cid = cid,
     eventUri = eventUri,
     status = Rsvp.Status.fromId(status),
     sortedAt = sortedAt,
+    author = author,
 )

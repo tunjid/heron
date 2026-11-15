@@ -59,6 +59,7 @@ import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.isBlocked
+import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
 import com.tunjid.heron.data.core.types.BlockUri
@@ -75,6 +76,7 @@ import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileLinkUri
 import com.tunjid.heron.data.core.types.ProfileVerificationUri
@@ -766,13 +768,14 @@ internal class OfflineRecordResolver(
                     val sortedAt = rsvp.createdAt
                         ?: uri.recordKey.tidInstant
                         ?: Instant.DISTANT_PAST
-                    if (viewingProfileId == uri.profileId()) multipleEntitySaverProvider.saveInTransaction {
+                    val authorId = uri.profileId()
+                    multipleEntitySaverProvider.saveInTransaction {
                         add(
                             rsvpUri = uri,
                             rsvpCid = cid,
                             rsvp = rsvp,
                             sortedAt = sortedAt,
-                            authorId = viewingProfileId,
+                            authorId = authorId,
                         )
                     }
                     Rsvp(
@@ -781,6 +784,18 @@ internal class OfflineRecordResolver(
                         eventUri = EventUri(rsvp.subject.uri.atUri),
                         status = Rsvp.Status.fromId(rsvp.status),
                         sortedAt = sortedAt,
+                        // The creator is saved alongside the record, but may have failed to fetch.
+                        author = profileDao.profiles(
+                            signedInProfiledId = viewingProfileId?.id,
+                            ids = listOf(authorId),
+                        )
+                            .first()
+                            .firstOrNull()
+                            ?.asExternalModel()
+                            ?: stubProfile(
+                                did = authorId,
+                                handle = ProfileHandle(authorId.id),
+                            ),
                     )
                 }
 

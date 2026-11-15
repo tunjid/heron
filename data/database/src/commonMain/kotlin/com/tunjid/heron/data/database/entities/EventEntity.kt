@@ -83,6 +83,8 @@ data class PopulatedEventEntity(
     val author: ProfileEntity,
     @Embedded(prefix = "rsvp_")
     val rsvp: RsvpEntity?,
+    @Embedded(prefix = "rsvpAuthor_")
+    val rsvpAuthor: ProfileEntity?,
 ) : PopulatedRecordEntity {
     override val recordUri: EmbeddableRecordUri
         get() = entity.uri
@@ -113,7 +115,9 @@ fun PopulatedEventEntity.asExternalModel() = Event(
             if (width > 0 && height > 0) width.toFloat() / height else null
         }
     },
-    rsvp = rsvp?.asExternalModel(),
+    rsvp = rsvp?.asExternalModel(
+        author = rsvpAuthor.asExternalModel(),
+    ),
     bskyPostRef = entity.bskyPostUri?.let { uri ->
         entity.bskyPostCid?.let { cid ->
             Event.BskyPostRef(

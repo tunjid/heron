@@ -32,6 +32,7 @@ data class Rsvp(
     val eventUri: EventUri,
     val status: Status,
     val sortedAt: Instant,
+    val author: Profile,
 ) : Record {
     override val reference: Record.Reference =
         Record.Reference(

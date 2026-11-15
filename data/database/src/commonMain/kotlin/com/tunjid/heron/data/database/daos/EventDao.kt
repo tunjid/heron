@@ -28,6 +28,7 @@ import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.RsvpUri
 import com.tunjid.heron.data.database.entities.EventEntity
 import com.tunjid.heron.data.database.entities.PopulatedEventEntity
+import com.tunjid.heron.data.database.entities.PopulatedRsvpEntity
 import com.tunjid.heron.data.database.entities.RsvpEntity
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
@@ -50,11 +51,17 @@ interface EventDao {
                 rsvps.eventUri as rsvp_eventUri,
                 rsvps.authorId as rsvp_authorId,
                 rsvps.status as rsvp_status,
-                rsvps.sortedAt as rsvp_sortedAt
+                rsvps.sortedAt as rsvp_sortedAt,
+                rsvpAuthors.did as rsvpAuthor_did,
+                rsvpAuthors.handle as rsvpAuthor_handle,
+                rsvpAuthors.displayName as rsvpAuthor_displayName,
+                rsvpAuthors.avatar as rsvpAuthor_avatar
             FROM events
             LEFT JOIN rsvps
                 ON events.uri = rsvps.eventUri
                 AND rsvps.authorId IS :viewingProfileId
+            LEFT JOIN profiles AS rsvpAuthors
+                ON rsvps.authorId = rsvpAuthors.did
             INNER JOIN profiles
                 ON events.authorId = profiles.did
             WHERE events.uri = :uri
@@ -78,11 +85,17 @@ interface EventDao {
                 rsvps.eventUri as rsvp_eventUri,
                 rsvps.authorId as rsvp_authorId,
                 rsvps.status as rsvp_status,
-                rsvps.sortedAt as rsvp_sortedAt
+                rsvps.sortedAt as rsvp_sortedAt,
+                rsvpAuthors.did as rsvpAuthor_did,
+                rsvpAuthors.handle as rsvpAuthor_handle,
+                rsvpAuthors.displayName as rsvpAuthor_displayName,
+                rsvpAuthors.avatar as rsvpAuthor_avatar
             FROM events
             LEFT JOIN rsvps
                 ON events.uri = rsvps.eventUri
                 AND rsvps.authorId IS :viewingProfileId
+            LEFT JOIN profiles AS rsvpAuthors
+                ON rsvps.authorId = rsvpAuthors.did
             INNER JOIN profiles
                 ON events.authorId = profiles.did
             WHERE events.uri IN (:uris)
@@ -106,11 +119,17 @@ interface EventDao {
                 rsvps.eventUri as rsvp_eventUri,
                 rsvps.authorId as rsvp_authorId,
                 rsvps.status as rsvp_status,
-                rsvps.sortedAt as rsvp_sortedAt
+                rsvps.sortedAt as rsvp_sortedAt,
+                rsvpAuthors.did as rsvpAuthor_did,
+                rsvpAuthors.handle as rsvpAuthor_handle,
+                rsvpAuthors.displayName as rsvpAuthor_displayName,
+                rsvpAuthors.avatar as rsvpAuthor_avatar
             FROM events
             LEFT JOIN rsvps
                 ON events.uri = rsvps.eventUri
                 AND rsvps.authorId IS :viewingProfileId
+            LEFT JOIN profiles AS rsvpAuthors
+                ON rsvps.authorId = rsvpAuthors.did
             INNER JOIN profiles
                 ON events.authorId = profiles.did
             WHERE events.authorId = :authorId
@@ -139,11 +158,17 @@ interface EventDao {
                 rsvps.eventUri as rsvp_eventUri,
                 rsvps.authorId as rsvp_authorId,
                 rsvps.status as rsvp_status,
-                rsvps.sortedAt as rsvp_sortedAt
+                rsvps.sortedAt as rsvp_sortedAt,
+                rsvpAuthors.did as rsvpAuthor_did,
+                rsvpAuthors.handle as rsvpAuthor_handle,
+                rsvpAuthors.displayName as rsvpAuthor_displayName,
+                rsvpAuthors.avatar as rsvpAuthor_avatar
             FROM events
             INNER JOIN rsvps
                 ON events.uri = rsvps.eventUri
                 AND rsvps.authorId = :viewingProfileId
+            LEFT JOIN profiles AS rsvpAuthors
+                ON rsvps.authorId = rsvpAuthors.did
             INNER JOIN profiles
                 ON events.authorId = profiles.did
             WHERE :status IS NULL OR rsvps.status = :status
@@ -158,6 +183,26 @@ interface EventDao {
         limit: Long,
         offset: Long,
     ): Flow<List<PopulatedEventEntity>>
+
+    // --- RSVPs ---
+
+    @Transaction
+    @Query(
+        """
+            SELECT * FROM rsvps
+            WHERE eventUri = :eventUri
+            AND (:status IS NULL OR status = :status)
+            ORDER BY sortedAt DESC
+            LIMIT :limit
+            OFFSET :offset
+        """,
+    )
+    fun rsvps(
+        eventUri: EventUri,
+        status: String?,
+        limit: Long,
+        offset: Long,
+    ): Flow<List<PopulatedRsvpEntity>>
 
     @Upsert
     suspend fun upsertEvents(
@@ -277,6 +322,20 @@ interface EventDao {
         """,
     )
     suspend fun deleteRsvpsForViewer(
+        viewingProfileId: String,
+        status: String?,
+    )
+
+    @Query(
+        """
+            DELETE FROM rsvps
+            WHERE eventUri = :eventUri
+            AND authorId IS NOT :viewingProfileId
+            AND (:status IS NULL OR status = :status)
+        """,
+    )
+    suspend fun deleteRsvpsForEvent(
+        eventUri: EventUri,
         viewingProfileId: String,
         status: String?,
     )

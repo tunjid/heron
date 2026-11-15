@@ -48,7 +48,8 @@ data class Event(
     val thumbnailAspectRatio: Float?,
     val rsvp: Rsvp?,
     val bskyPostRef: BskyPostRef?,
-) : Record.Embeddable.External {
+) : Record.Embeddable.External,
+    UrlEncodableModel {
     override val reference: Record.Reference =
         Record.Reference(
             id = cid,
