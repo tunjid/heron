@@ -20,6 +20,7 @@ import ext.libs
 
 plugins {
     id("com.android.application")
+    id("spotless-convention")
 }
 
 android {

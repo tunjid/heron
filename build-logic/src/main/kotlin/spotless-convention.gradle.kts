@@ -14,6 +14,20 @@
  *    limitations under the License.
  */
 
-import ext.configureKotlinJvm
+import ext.libs
 
-configureKotlinJvm()
+plugins {
+    id("com.diffplug.spotless")
+}
+
+spotless {
+    kotlin {
+        ktlint(libs.ktlint.get().version)
+        target(
+            "src/**/*.kt",
+            "build-logic/src/*.kt",
+            "*.kts",
+            "build-logic/*.kts",
+        )
+    }
+}

@@ -34,6 +34,7 @@ dependencies {
     implementation(libs.google.devtools.kspPlugin)
     implementation(libs.metro.gradlePlugin)
     implementation(libs.axion.release.gradlePlugin)
+    implementation(libs.spotless.gradlePlugin)
     implementation(libs.tunjid.snapshottablePlugin)
 
     // TODO: https://github.com/gradle/gradle/issues/15383

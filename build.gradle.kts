@@ -14,8 +14,6 @@
  *    limitations under the License.
  */
 
-import com.diffplug.gradle.spotless.SpotlessExtension
-
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
     // in each subproject's classloader
@@ -33,31 +31,16 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinJvm) apply false
     alias(libs.plugins.metro) apply false
     alias(libs.plugins.ozoneLexiconGenerator) apply false
-    alias(libs.plugins.spotless) apply false
     alias(libs.plugins.aboutLibraries) apply false
     alias(libs.plugins.burst) apply false
     alias(libs.plugins.tunjid.snapshottable) apply false
+    id("spotless-convention")
 }
 
 // 1. Register the lifecycle task (Lazy)
 val testDataLayer by tasks.registering {
     group = "verification"
     description = "Runs tests for all data modules"
-}
-
-allprojects {
-    plugins.apply(rootProject.libs.plugins.spotless.get().pluginId)
-    extensions.configure<SpotlessExtension> {
-        kotlin {
-            target(
-                "src/**/*.kt",
-                "build-logic/**/*.kt",
-                "**/*.kts",
-            )
-            targetExclude("**/build/**")
-            ktlint(rootProject.libs.ktlint.get().version)
-        }
-    }
 }
 
 subprojects {
