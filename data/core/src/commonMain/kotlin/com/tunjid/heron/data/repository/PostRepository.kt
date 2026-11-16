@@ -340,11 +340,14 @@ internal class OfflinePostRepository(
                                 items = quotedPostUriAndEmbeddedRecordUris,
                                 signedInProfileId = signedInProfileId,
                                 postUri = PostEntity.UriWithEmbeddedRecordUri::uri,
-                                associatedRecordUris = {
-                                    listOfNotNull(it.embeddedRecordUri) +
-                                        it.associatedRecords.map(
-                                            PostExternalAssociatedRecordEntity::recordUri,
-                                        )
+                                associatedRecordUris = { post ->
+                                    buildList {
+                                        post.embeddedRecordUri?.let(::add)
+                                        post.associatedRecords
+                                            .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+                                        post.quotedPostAssociatedRecords
+                                            .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+                                    }
                                 },
                                 associatedProfileIds = {
                                     emptyList()
@@ -417,11 +420,14 @@ internal class OfflinePostRepository(
                             items = bookmarkedPostUriAndEmbeddedRecordUris,
                             signedInProfileId = signedInProfileId,
                             postUri = PostEntity.UriWithEmbeddedRecordUri::uri,
-                            associatedRecordUris = {
-                                listOfNotNull(it.embeddedRecordUri) +
-                                    it.associatedRecords.map(
-                                        PostExternalAssociatedRecordEntity::recordUri,
-                                    )
+                            associatedRecordUris = { post ->
+                                buildList {
+                                    post.embeddedRecordUri?.let(::add)
+                                    post.associatedRecords
+                                        .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+                                    post.quotedPostAssociatedRecords
+                                        .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+                                }
                             },
                             associatedProfileIds = {
                                 emptyList()

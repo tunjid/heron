@@ -61,6 +61,7 @@ import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.core.types.Id
@@ -80,6 +81,7 @@ import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
+import com.tunjid.heron.data.database.entities.PopulatedTimelineItemEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
@@ -92,6 +94,7 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.asNetworkInteraction
 import com.tunjid.heron.data.network.models.blueskyEmbeddedRecords
 import com.tunjid.heron.data.network.models.externalEmbeddedRecordUris
+import com.tunjid.heron.data.network.models.quotedPostEntity
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -616,11 +619,14 @@ internal class OfflineTimelineRepository(
                     postUri = {
                         it.entity.uri
                     },
-                    associatedRecordUris = {
-                        listOfNotNull(it.entity.record?.embeddedRecordUri) +
-                            it.associatedRecords.map(
-                                PostExternalAssociatedRecordEntity::recordUri,
-                            )
+                    associatedRecordUris = { threadedPost ->
+                        buildList {
+                            threadedPost.entity.record?.embeddedRecordUri?.let(::add)
+                            threadedPost.associatedRecords
+                                .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+                            threadedPost.quotedPostAssociatedRecords
+                                .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+                        }
                     },
                     associatedProfileIds = {
                         emptyList()
@@ -1161,8 +1167,10 @@ internal class OfflineTimelineRepository(
                 offset = query.data.offset,
                 limit = query.data.limit,
             )
+                // Associated records resolved after the items were saved change what's loaded
+                // for them, so they're part of the key too.
                 .distinctUntilChangedBy { itemEntities ->
-                    itemEntities.map { it.entity.id }
+                    itemEntities.map { it.entity.id to it.associatedRecordUris() }
                 }
                 .flatMapLatest latestFeedItems@{ itemEntities ->
                     if (itemEntities.isEmpty()) {
@@ -1173,17 +1181,7 @@ internal class OfflineTimelineRepository(
                         items = itemEntities,
                         signedInProfileId = signedInProfileId,
                         postUri = { it.entity.postUri },
-                        associatedRecordUris = {
-                            listOfNotNull(
-                                it.entity.reply?.parentPostUri,
-                                it.entity.reply?.rootPostUri,
-                                it.entity.embeddedRecordUri,
-                                it.entity.reply?.rootPostEmbeddedRecordUri,
-                                it.entity.reply?.parentPostEmbeddedRecordUri,
-                            ) + it.associatedRecords.map(
-                                PostExternalAssociatedRecordEntity::recordUri,
-                            )
-                        },
+                        associatedRecordUris = PopulatedTimelineItemEntity::associatedRecordUris,
                         associatedProfileIds = {
                             listOfNotNull(it.entity.reposter)
                         },
@@ -1341,7 +1339,13 @@ internal class OfflineTimelineRepository(
             val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
 
             postDao.postExternalAssociatedRecords(
-                postUris = response.posts.map { PostUri(it.uri.atUri) },
+                // Quoted posts' external records are shown in their quote, so watch those too.
+                postUris = response.posts.flatMap {
+                    listOfNotNull(
+                        PostUri(it.uri.atUri),
+                        it.quotedPostEntity()?.uri,
+                    )
+                },
             )
                 .distinctUntilChangedBy { entities ->
                     entities.map(PostExternalAssociatedRecordEntity::recordUri)
@@ -1356,13 +1360,20 @@ internal class OfflineTimelineRepository(
                         signedInProfileId = signedInProfileId,
                         postUri = { PostUri(it.uri.atUri) },
                         associatedRecordUris = { postView ->
-                            postView.blueskyEmbeddedRecords(
-                                viewingProfileId = signedInProfileId,
-                            )
-                                .map(Record.Embeddable::embeddableRecordUri)
-                                .plus(postView.externalEmbeddedRecordUris())
-                                .plus(externalRecordUris[PostUri(postView.uri.atUri)].orEmpty())
-                                .distinct()
+                            // Duplicates are fine, the resolver collects these into a set.
+                            buildList {
+                                postView.blueskyEmbeddedRecords(
+                                    viewingProfileId = signedInProfileId,
+                                )
+                                    .mapTo(this, Record.Embeddable::embeddableRecordUri)
+                                addAll(postView.externalEmbeddedRecordUris())
+                                externalRecordUris[PostUri(postView.uri.atUri)]
+                                    ?.let(::addAll)
+                                postView.quotedPostEntity()
+                                    ?.uri
+                                    ?.let(externalRecordUris::get)
+                                    ?.let(::addAll)
+                            }
                         },
                         associatedProfileIds = {
                             emptyList()
@@ -1447,7 +1458,13 @@ internal class OfflineTimelineRepository(
             }
 
             postDao.postExternalAssociatedRecords(
-                postUris = postViews.map { PostUri(it.uri.atUri) },
+                // Quoted posts' external records are shown in their quote, so watch those too.
+                postUris = postViews.flatMap {
+                    listOfNotNull(
+                        PostUri(it.uri.atUri),
+                        it.quotedPostEntity()?.uri,
+                    )
+                },
             )
                 .distinctUntilChangedBy { entities ->
                     entities.map(PostExternalAssociatedRecordEntity::recordUri)
@@ -1462,13 +1479,20 @@ internal class OfflineTimelineRepository(
                         signedInProfileId = signedInProfileId,
                         postUri = { PostUri(it.uri.atUri) },
                         associatedRecordUris = { postView ->
-                            postView.blueskyEmbeddedRecords(
-                                viewingProfileId = signedInProfileId,
-                            )
-                                .map(Record.Embeddable::embeddableRecordUri)
-                                .plus(postView.externalEmbeddedRecordUris())
-                                .plus(externalRecordUris[PostUri(postView.uri.atUri)].orEmpty())
-                                .distinct()
+                            // Duplicates are fine, the resolver collects these into a set.
+                            buildList {
+                                postView.blueskyEmbeddedRecords(
+                                    viewingProfileId = signedInProfileId,
+                                )
+                                    .mapTo(this, Record.Embeddable::embeddableRecordUri)
+                                addAll(postView.externalEmbeddedRecordUris())
+                                externalRecordUris[PostUri(postView.uri.atUri)]
+                                    ?.let(::addAll)
+                                postView.quotedPostEntity()
+                                    ?.uri
+                                    ?.let(externalRecordUris::get)
+                                    ?.let(::addAll)
+                            }
                         },
                         associatedProfileIds = {
                             emptyList()
@@ -1871,6 +1895,29 @@ private fun TimelinePreferencesEntity?.preferredPresentation(): Timeline.Present
         else -> Timeline.Presentation.Text.WithEmbed
     }
 
+private fun PopulatedTimelineItemEntity.associatedRecordUris(): List<EmbeddableRecordUri> =
+    buildList {
+        entity.reply?.let { reply ->
+            add(reply.parentPostUri)
+            add(reply.rootPostUri)
+        }
+        entity.embeddedRecordUri?.let(::add)
+        entity.reply?.rootPostEmbeddedRecordUri?.let(::add)
+        entity.reply?.parentPostEmbeddedRecordUri?.let(::add)
+        associatedRecords
+            .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+        quotedPostAssociatedRecords
+            .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+        parentPostAssociatedRecords
+            .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+        rootPostAssociatedRecords
+            .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+        parentQuotedPostAssociatedRecords
+            .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+        rootQuotedPostAssociatedRecords
+            .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+    }
+
 private fun TimelineDao.timelineState(
     viewingProfileId: ProfileId?,
     sourceId: String,
@@ -1905,8 +1952,8 @@ private data class TimelineState(
 
 private fun FeedGeneratorEntity.supportsMediaPresentation() =
     contentMode in FeedGenerator.MediaContentModes
-
 private const val MAX_REPLY_DEPTH = 3
+
 private const val MAX_SIBLINGS_PER_NODE = 3
 
 // getTopicFeed caps its limit at 25 in its lexicon, and getPosts hydrates at most 25 uris per call.

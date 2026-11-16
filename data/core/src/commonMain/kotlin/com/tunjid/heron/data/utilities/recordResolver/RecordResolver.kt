@@ -401,21 +401,22 @@ internal class OfflineRecordResolver(
             associatedRecords.values.map { recordEntity ->
                 when (recordEntity) {
                     // Top level posts have their embedded Records populated
-                    is PopulatedPostEntity -> recordEntity.asExternalModel(
-                        embeddedRecords = buildList {
-                            recordEntity.entity
-                                .record
-                                ?.embeddedRecordUri
-                                ?.let(::add)
-                            recordEntity.associatedExternalRecords
-                                .forEach { add(it.recordUri) }
-                        }
-                            .mapNotNull { uri ->
-                                associatedRecords[uri]?.toEmbeddableModel()
+                    is PopulatedPostEntity -> recordEntity.toEmbeddableModel { parentPostEntity ->
+                        parentPostEntity.lookupEmbeddableRecords { parentPostUri ->
+                            // Look up embeddable records in quote posts too.
+                            associatedRecords[parentPostUri]?.toEmbeddableModel { quotePostEntity ->
+                                quotePostEntity.lookupEmbeddableRecords { quotePostUri ->
+                                    associatedRecords[quotePostUri]?.toEmbeddableModel {
+                                        // No need to get quoted posts
+                                        emptyList()
+                                    }
+                                }
                             }
-                            .sortedBy(::embeddedRecordOrder),
-                    )
-                    else -> recordEntity.toEmbeddableModel()
+                        }
+                    }
+                    else -> recordEntity.toEmbeddableModel {
+                        emptyList()
+                    }
                 }
             }
         }
@@ -1051,7 +1052,9 @@ internal class OfflineRecordResolver(
  * Maps a resolved [PopulatedRecordEntity] to its [Record.Embeddable] model. Nested posts
  * (eg. a quote of a quote) are resolved one level deep with empty [Post.embeddedRecords].
  */
-private fun PopulatedRecordEntity.toEmbeddableModel(): Record.Embeddable = when (this) {
+private fun PopulatedRecordEntity.toEmbeddableModel(
+    postEmbedLookup: (PopulatedPostEntity) -> List<Record.Embeddable>,
+): Record.Embeddable = when (this) {
     is PopulatedFeedGeneratorEntity -> asExternalModel()
     is PopulatedLabelerEntity -> asExternalModel()
     is PopulatedListEntity -> asExternalModel()
@@ -1059,7 +1062,9 @@ private fun PopulatedRecordEntity.toEmbeddableModel(): Record.Embeddable = when 
     is PopulatedStandardPublicationEntity -> asExternalModel()
     is PopulatedStarterPackEntity -> asExternalModel()
     is PopulatedEventEntity -> asExternalModel()
-    is PopulatedPostEntity -> asExternalModel(embeddedRecords = emptyList())
+    is PopulatedPostEntity -> asExternalModel(
+        embeddedRecords = postEmbedLookup(this),
+    )
 }
 
 private fun PopulatedRecordEntity.needsRefreshing() =
@@ -1076,6 +1081,21 @@ private fun PopulatedRecordEntity.needsRefreshing() =
         is PopulatedEventEntity,
         -> this.entity.cid == null
     }
+
+private inline fun PopulatedPostEntity.lookupEmbeddableRecords(
+    crossinline postEmbedLookup: (EmbeddableRecordUri) -> Record.Embeddable?,
+): List<Record.Embeddable> = buildList {
+    entity
+        .record
+        ?.embeddedRecordUri
+        ?.let(::add)
+    associatedExternalRecords
+        .forEach {
+            add(it.recordUri)
+        }
+}
+    .mapNotNull(postEmbedLookup)
+    .sortedBy(::embeddedRecordOrder)
 
 /**
  * Stable ordering for a [Post]'s embedded records: (1) quoted post, (2) other bluesky embedded
