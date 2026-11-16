@@ -69,7 +69,8 @@ import com.tunjid.heron.timeline.ui.event.Event
 import com.tunjid.heron.timeline.ui.event.EventDetails
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.ui.sharedElementPrefix
+import com.tunjid.heron.timeline.ui.withEmbeddingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
@@ -460,8 +461,8 @@ internal fun EventComments(
                                     is PostAction.OfRecord -> navigateTo(
                                         recordDestination(
                                             referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                            sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
-                                                quotingPostUri = action.owningPostUri,
+                                            sharedElementPrefix = action.sharedElementPrefix(
+                                                prefix = sharedElementPrefix,
                                             ),
                                             record = action.record,
                                         ),
@@ -472,8 +473,8 @@ internal fun EventComments(
                                             post = action.post,
                                             media = action.media,
                                             startIndex = action.index,
-                                            sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
-                                                quotingPostUri = action.quotingPostUri,
+                                            sharedElementPrefix = sharedElementPrefix.withEmbeddingPostUriPrefix(
+                                                embeddingPostUri = action.quotingPostUri,
                                             ),
                                         ),
                                     )

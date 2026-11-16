@@ -74,7 +74,7 @@ import com.tunjid.heron.sheets.rememberPostOptionsSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.ui.PostAction
-import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.ui.withEmbeddingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
@@ -237,23 +237,28 @@ internal fun NotificationsScreen(
                         post = quote ?: notification.associatedPost,
                         media = media,
                         startIndex = index,
-                        sharedElementPrefix = notification.sharedElementPrefix().withQuotingPostUriPrefix(
-                            quotingPostUri = notification.associatedPost.uri.takeIf { quote != null },
+                        sharedElementPrefix = notification.sharedElementPrefix().withEmbeddingPostUriPrefix(
+                            embeddingPostUri = notification.associatedPost.uri.takeIf { quote != null },
                         ),
                     ),
                 ),
             )
         }
     }
-    val onEmbeddedRecordClicked: (Notification.PostAssociated, Record) -> Unit = remember {
-        { notification, record ->
+    val onEmbeddedRecordClicked: (Notification.PostAssociated, Record, Post?) -> Unit = remember {
+        { notification, record, quote ->
             actions(
                 Action.Navigate.To(
                     recordDestination(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        sharedElementPrefix = notification.sharedElementPrefix().withQuotingPostUriPrefix(
-                            quotingPostUri = notification.associatedPost.uri,
-                        ),
+                        // Records in quotes are scoped by the quoting post, then the quoted post.
+                        sharedElementPrefix = notification.sharedElementPrefix()
+                            .withEmbeddingPostUriPrefix(
+                                embeddingPostUri = notification.associatedPost.uri.takeIf { quote != null },
+                            )
+                            .withEmbeddingPostUriPrefix(
+                                embeddingPostUri = quote?.uri ?: notification.associatedPost.uri,
+                            ),
                         record = record,
                     ),
                 ),
@@ -268,8 +273,8 @@ internal fun NotificationsScreen(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         profile = profile,
                         avatarSharedElementKey = quotedPost.avatarSharedElementKey(
-                            prefix = notification.sharedElementPrefix().withQuotingPostUriPrefix(
-                                quotingPostUri = notification.associatedPost.uri,
+                            prefix = notification.sharedElementPrefix().withEmbeddingPostUriPrefix(
+                                embeddingPostUri = notification.associatedPost.uri,
                             ),
                         ),
                     ),

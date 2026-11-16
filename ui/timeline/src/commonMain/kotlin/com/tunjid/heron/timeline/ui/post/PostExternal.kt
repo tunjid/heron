@@ -53,7 +53,7 @@ import com.tunjid.heron.timeline.ui.event.Event
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
-import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.ui.withEmbeddingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.shapes.Rectangle
@@ -62,7 +62,7 @@ import kotlin.uuid.Uuid
 /**
  * Renders an [ExternalEmbed] card (and any backing standard-site [externalRecord]) as a standalone,
  * non-interactive preview — e.g. in the composer before a post exists. The post identity needed by
- * [PostExternal] for shared-element keys is stubbed internally; it never matches a real post.
+ * [PostExternalEmbed] for shared-element keys is stubbed internally; it never matches a real post.
  */
 @Composable
 fun ExternalEmbedPreview(
@@ -73,7 +73,7 @@ fun ExternalEmbedPreview(
 ) {
     val sharedElementPrefix = remember { Uuid.random().toString() }
     Box(modifier = modifier) {
-        PostExternal(
+        PostExternalEmbed(
             feature = embed,
             externalRecord = externalRecord,
             postUri = PreviewPostUri,
@@ -88,7 +88,7 @@ fun ExternalEmbedPreview(
 }
 
 @Composable
-internal fun PostExternal(
+internal fun PostExternalEmbed(
     feature: ExternalEmbed,
     externalRecord: Record.Embeddable.External?,
     postUri: PostUri,
@@ -125,8 +125,8 @@ internal fun PostExternal(
                         modifier = Modifier
                             .padding(all = 12.dp),
                         paneTransitionScope = paneTransitionScope,
-                        sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
-                            quotingPostUri = postUri,
+                        sharedElementPrefix = sharedElementPrefix.withEmbeddingPostUriPrefix(
+                            embeddingPostUri = postUri,
                         ),
                         event = record,
                         isBlurred = isBlurred,
@@ -143,8 +143,8 @@ internal fun PostExternal(
                         modifier = Modifier
                             .padding(all = 12.dp),
                         paneTransitionScope = paneTransitionScope,
-                        sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
-                            quotingPostUri = postUri,
+                        sharedElementPrefix = sharedElementPrefix.withEmbeddingPostUriPrefix(
+                            embeddingPostUri = postUri,
                         ),
                         document = record,
                         // The publication below already shows itself and offers subscribing.
@@ -162,8 +162,8 @@ internal fun PostExternal(
                         modifier = Modifier
                             .padding(all = 12.dp),
                         paneTransitionScope = paneTransitionScope,
-                        sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
-                            quotingPostUri = postUri,
+                        sharedElementPrefix = sharedElementPrefix.withEmbeddingPostUriPrefix(
+                            embeddingPostUri = postUri,
                         ),
                         publication = record,
                         onSubscriptionToggled = { toggledPublication, _ ->

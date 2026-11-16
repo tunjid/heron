@@ -89,7 +89,8 @@ import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.ui.sharedElementPrefix
+import com.tunjid.heron.timeline.ui.withEmbeddingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
@@ -323,12 +324,11 @@ fun Comments(
                                                 }
                                                 is PostAction.OfRecord -> {
                                                     val record = action.record
-                                                    val owningPostUri = action.owningPostUri
                                                     navigateTo(
                                                         recordDestination(
                                                             referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                                            sharedElementPrefix = commentSharedElementPrefix.withQuotingPostUriPrefix(
-                                                                quotingPostUri = owningPostUri,
+                                                            sharedElementPrefix = action.sharedElementPrefix(
+                                                                prefix = commentSharedElementPrefix,
                                                             ),
                                                             record = record,
                                                         ),
@@ -340,8 +340,8 @@ fun Comments(
                                                             post = action.post,
                                                             media = action.media,
                                                             startIndex = action.index,
-                                                            sharedElementPrefix = commentSharedElementPrefix.withQuotingPostUriPrefix(
-                                                                quotingPostUri = action.quotingPostUri,
+                                                            sharedElementPrefix = commentSharedElementPrefix.withEmbeddingPostUriPrefix(
+                                                                embeddingPostUri = action.quotingPostUri,
                                                             ),
                                                         ),
                                                     )

@@ -61,7 +61,7 @@ fun LikeRow(
     onProfileClicked: (Notification, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
     onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int, Post?) -> Unit,
-    onEmbeddedRecordClicked: (Notification.PostAssociated, Record) -> Unit,
+    onEmbeddedRecordClicked: (Notification.PostAssociated, Record, Post?) -> Unit,
     onQuotedProfileClicked: (Notification.PostAssociated, Post, Profile) -> Unit,
     onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit,
 ) {

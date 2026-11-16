@@ -69,7 +69,8 @@ import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.ui.sharedElementPrefix
+import com.tunjid.heron.timeline.ui.withEmbeddingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.onDominantVideoChange
@@ -406,8 +407,9 @@ private fun PostsTimeline(
                                             Action.Navigate.To(
                                                 recordDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    sharedElementPrefix = SharedElementPrefix
-                                                        .withQuotingPostUriPrefix(action.owningPostUri),
+                                                    sharedElementPrefix = action.sharedElementPrefix(
+                                                        prefix = SharedElementPrefix,
+                                                    ),
                                                     record = action.record,
                                                 ),
                                             ),
@@ -422,7 +424,7 @@ private fun PostsTimeline(
                                                     media = action.media,
                                                     startIndex = action.index,
                                                     sharedElementPrefix = SharedElementPrefix
-                                                        .withQuotingPostUriPrefix(action.quotingPostUri),
+                                                        .withEmbeddingPostUriPrefix(action.quotingPostUri),
                                                 ),
                                             ),
                                         )

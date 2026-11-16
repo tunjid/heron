@@ -102,6 +102,7 @@ fun EmbeddedRecord(
                         PostAction.OfRecord(
                             record = embeddedRecord,
                             owningPostUri = record.uri,
+                            quotingPostUri = null,
                         ),
                     )
                 },
