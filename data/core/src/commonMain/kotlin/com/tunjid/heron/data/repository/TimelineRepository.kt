@@ -617,13 +617,14 @@ internal class OfflineTimelineRepository(
                     postUri = {
                         it.entity.uri
                     },
-                    associatedRecordUris = {
-                        listOfNotNull(it.entity.record?.embeddedRecordUri) +
-                            it.associatedRecords.map(
-                                PostExternalAssociatedRecordEntity::recordUri,
-                            ) + it.quotedPostAssociatedRecords.map(
-                                PostExternalAssociatedRecordEntity::recordUri,
-                            )
+                    associatedRecordUris = { threadedPost ->
+                        buildList {
+                            threadedPost.entity.record?.embeddedRecordUri?.let(::add)
+                            threadedPost.associatedRecords
+                                .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+                            threadedPost.quotedPostAssociatedRecords
+                                .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+                        }
                     },
                     associatedProfileIds = {
                         emptyList()
@@ -1176,18 +1177,28 @@ internal class OfflineTimelineRepository(
                         items = itemEntities,
                         signedInProfileId = signedInProfileId,
                         postUri = { it.entity.postUri },
-                        associatedRecordUris = {
-                            listOfNotNull(
-                                it.entity.reply?.parentPostUri,
-                                it.entity.reply?.rootPostUri,
-                                it.entity.embeddedRecordUri,
-                                it.entity.reply?.rootPostEmbeddedRecordUri,
-                                it.entity.reply?.parentPostEmbeddedRecordUri,
-                            ) + it.associatedRecords.map(
-                                PostExternalAssociatedRecordEntity::recordUri,
-                            ) + it.quotedPostAssociatedRecords.map(
-                                PostExternalAssociatedRecordEntity::recordUri,
-                            )
+                        associatedRecordUris = { populated ->
+                            buildList {
+                                populated.entity.reply?.let { reply ->
+                                    add(reply.parentPostUri)
+                                    add(reply.rootPostUri)
+                                }
+                                populated.entity.embeddedRecordUri?.let(::add)
+                                populated.entity.reply?.rootPostEmbeddedRecordUri?.let(::add)
+                                populated.entity.reply?.parentPostEmbeddedRecordUri?.let(::add)
+                                populated.associatedRecords
+                                    .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+                                populated.quotedPostAssociatedRecords
+                                    .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+                                populated.parentPostAssociatedRecords
+                                    .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+                                populated.rootPostAssociatedRecords
+                                    .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+                                populated.parentQuotedPostAssociatedRecords
+                                    .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+                                populated.rootQuotedPostAssociatedRecords
+                                    .mapTo(this, PostExternalAssociatedRecordEntity::recordUri)
+                            }
                         },
                         associatedProfileIds = {
                             listOfNotNull(it.entity.reposter)
