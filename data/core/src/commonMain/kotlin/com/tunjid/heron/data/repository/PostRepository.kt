@@ -344,6 +344,8 @@ internal class OfflinePostRepository(
                                     listOfNotNull(it.embeddedRecordUri) +
                                         it.associatedRecords.map(
                                             PostExternalAssociatedRecordEntity::recordUri,
+                                        ) + it.quotedPostAssociatedRecords.map(
+                                            PostExternalAssociatedRecordEntity::recordUri,
                                         )
                                 },
                                 associatedProfileIds = {
@@ -420,6 +422,8 @@ internal class OfflinePostRepository(
                             associatedRecordUris = {
                                 listOfNotNull(it.embeddedRecordUri) +
                                     it.associatedRecords.map(
+                                        PostExternalAssociatedRecordEntity::recordUri,
+                                    ) + it.quotedPostAssociatedRecords.map(
                                         PostExternalAssociatedRecordEntity::recordUri,
                                     )
                             },

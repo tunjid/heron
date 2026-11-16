@@ -131,6 +131,15 @@ data class PopulatedTimelineItemEntity(
         entityColumn = "postUri",
     )
     val associatedRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
+    /**
+     * External records of the post this one quotes, if it quotes one. Its [embeddedRecordUri]
+     * is the quoted post's uri, so non post embeds simply match nothing.
+     */
+    @Relation(
+        parentColumn = "embeddedRecordUri",
+        entityColumn = "postUri",
+    )
+    val quotedPostAssociatedRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
 )
 
 internal fun TimelineItemEntity.withoutSort() = TimelineItemEntity.WithoutSort(

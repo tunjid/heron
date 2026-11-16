@@ -92,6 +92,7 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.asNetworkInteraction
 import com.tunjid.heron.data.network.models.blueskyEmbeddedRecords
 import com.tunjid.heron.data.network.models.externalEmbeddedRecordUris
+import com.tunjid.heron.data.network.models.quotedPostEntity
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -619,6 +620,8 @@ internal class OfflineTimelineRepository(
                     associatedRecordUris = {
                         listOfNotNull(it.entity.record?.embeddedRecordUri) +
                             it.associatedRecords.map(
+                                PostExternalAssociatedRecordEntity::recordUri,
+                            ) + it.quotedPostAssociatedRecords.map(
                                 PostExternalAssociatedRecordEntity::recordUri,
                             )
                     },
@@ -1182,6 +1185,8 @@ internal class OfflineTimelineRepository(
                                 it.entity.reply?.parentPostEmbeddedRecordUri,
                             ) + it.associatedRecords.map(
                                 PostExternalAssociatedRecordEntity::recordUri,
+                            ) + it.quotedPostAssociatedRecords.map(
+                                PostExternalAssociatedRecordEntity::recordUri,
                             )
                         },
                         associatedProfileIds = {
@@ -1341,7 +1346,13 @@ internal class OfflineTimelineRepository(
             val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
 
             postDao.postExternalAssociatedRecords(
-                postUris = response.posts.map { PostUri(it.uri.atUri) },
+                // Quoted posts' external records are shown in their quote, so watch those too.
+                postUris = response.posts.flatMap {
+                    listOfNotNull(
+                        PostUri(it.uri.atUri),
+                        it.quotedPostEntity()?.uri,
+                    )
+                },
             )
                 .distinctUntilChangedBy { entities ->
                     entities.map(PostExternalAssociatedRecordEntity::recordUri)
@@ -1359,10 +1370,18 @@ internal class OfflineTimelineRepository(
                             postView.blueskyEmbeddedRecords(
                                 viewingProfileId = signedInProfileId,
                             )
+                                .asSequence()
                                 .map(Record.Embeddable::embeddableRecordUri)
                                 .plus(postView.externalEmbeddedRecordUris())
                                 .plus(externalRecordUris[PostUri(postView.uri.atUri)].orEmpty())
+                                .plus(
+                                    postView.quotedPostEntity()
+                                        ?.uri
+                                        ?.let(externalRecordUris::get)
+                                        .orEmpty(),
+                                )
                                 .distinct()
+                                .toList()
                         },
                         associatedProfileIds = {
                             emptyList()
@@ -1447,7 +1466,13 @@ internal class OfflineTimelineRepository(
             }
 
             postDao.postExternalAssociatedRecords(
-                postUris = postViews.map { PostUri(it.uri.atUri) },
+                // Quoted posts' external records are shown in their quote, so watch those too.
+                postUris = postViews.flatMap {
+                    listOfNotNull(
+                        PostUri(it.uri.atUri),
+                        it.quotedPostEntity()?.uri,
+                    )
+                },
             )
                 .distinctUntilChangedBy { entities ->
                     entities.map(PostExternalAssociatedRecordEntity::recordUri)
@@ -1465,10 +1490,18 @@ internal class OfflineTimelineRepository(
                             postView.blueskyEmbeddedRecords(
                                 viewingProfileId = signedInProfileId,
                             )
+                                .asSequence()
                                 .map(Record.Embeddable::embeddableRecordUri)
                                 .plus(postView.externalEmbeddedRecordUris())
                                 .plus(externalRecordUris[PostUri(postView.uri.atUri)].orEmpty())
+                                .plus(
+                                    postView.quotedPostEntity()
+                                        ?.uri
+                                        ?.let(externalRecordUris::get)
+                                        .orEmpty(),
+                                )
                                 .distinct()
+                                .toList()
                         },
                         associatedProfileIds = {
                             emptyList()
