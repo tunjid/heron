@@ -202,6 +202,7 @@ fun PostEmbed(
                             onClick = {
                                 onEmbeddedRecordClicked(nativeEmbeddedRecord)
                             },
+                            onEmbeddedRecordClicked = onEmbeddedRecordClicked,
                             onRecordInteraction = onRecordInteraction,
                         )
                     }
