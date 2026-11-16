@@ -57,7 +57,8 @@ import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.post.PostMetadata
 import com.tunjid.heron.timeline.ui.profile.verificationBadge
-import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.ui.sharedElementPrefix
+import com.tunjid.heron.timeline.ui.withEmbeddingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.onDominantVideoChange
@@ -288,12 +289,11 @@ internal fun PostDetailScreen(
 
                                     is PostAction.OfRecord -> {
                                         val record = action.record
-                                        val owningPostUri = action.owningPostUri
                                         navigateTo(
                                             recordDestination(
                                                 referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                                sharedElementPrefix = state.sharedElementPrefix.withQuotingPostUriPrefix(
-                                                    quotingPostUri = owningPostUri,
+                                                sharedElementPrefix = action.sharedElementPrefix(
+                                                    prefix = state.sharedElementPrefix,
                                                 ),
                                                 record = record,
                                             ),
@@ -306,8 +306,8 @@ internal fun PostDetailScreen(
                                                 post = action.post,
                                                 media = action.media,
                                                 startIndex = action.index,
-                                                sharedElementPrefix = state.sharedElementPrefix.withQuotingPostUriPrefix(
-                                                    quotingPostUri = action.quotingPostUri,
+                                                sharedElementPrefix = state.sharedElementPrefix.withEmbeddingPostUriPrefix(
+                                                    embeddingPostUri = action.quotingPostUri,
                                                 ),
                                                 otherModels = when {
                                                     action.isMainPost && action.post.uri == state.anchorPost?.uri -> buildList {

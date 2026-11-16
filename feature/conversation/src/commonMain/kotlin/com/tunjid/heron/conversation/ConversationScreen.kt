@@ -80,7 +80,8 @@ import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
-import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.ui.sharedElementPrefix
+import com.tunjid.heron.timeline.ui.withEmbeddingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.EmbeddedRecord
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.summary
@@ -593,8 +594,8 @@ private fun MessageRecord(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 profile = action.profile,
                                 avatarSharedElementKey = action.post.avatarSharedElementKey(
-                                    prefix = item.id.withQuotingPostUriPrefix(
-                                        quotingPostUri = action.quotingPostUri,
+                                    prefix = item.id.withEmbeddingPostUriPrefix(
+                                        embeddingPostUri = action.quotingPostUri,
                                     ),
                                     quotingPostUri = action.quotingPostUri,
                                 ),
@@ -606,8 +607,8 @@ private fun MessageRecord(
                         Action.Navigate.To(
                             recordDestination(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                sharedElementPrefix = item.id.withQuotingPostUriPrefix(
-                                    quotingPostUri = action.owningPostUri,
+                                sharedElementPrefix = action.sharedElementPrefix(
+                                    prefix = item.id,
                                 ),
                                 record = action.record,
                             ),
@@ -620,8 +621,8 @@ private fun MessageRecord(
                                 post = action.post,
                                 media = action.media,
                                 startIndex = action.index,
-                                sharedElementPrefix = item.id.withQuotingPostUriPrefix(
-                                    quotingPostUri = action.quotingPostUri,
+                                sharedElementPrefix = item.id.withEmbeddingPostUriPrefix(
+                                    embeddingPostUri = action.quotingPostUri,
                                 ),
                             ),
                         ),

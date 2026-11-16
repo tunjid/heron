@@ -61,7 +61,10 @@ sealed interface PostAction {
 
     data class OfRecord(
         val record: Record,
+        // The post that embeds the record, the quoted post when the record is inside a quote.
         val owningPostUri: PostUri,
+        // The post quoting the owning post, when the record is inside a quote.
+        val quotingPostUri: PostUri?,
     ) : PostAction
 
     data class OfMedia(
@@ -110,6 +113,12 @@ sealed interface PostAction {
         val document: StandardDocument,
     ) : RecordInteraction
 }
+
+fun PostAction.OfRecord.sharedElementPrefix(
+    prefix: String,
+): String = prefix
+    .withEmbeddingPostUriPrefix(embeddingPostUri = quotingPostUri)
+    .withEmbeddingPostUriPrefix(embeddingPostUri = owningPostUri)
 
 fun PostAction.RecordInteraction.toWritable(): Writable? = when (this) {
     is PostAction.OfPublicationSubscription -> publication.toSubscriptionWritable()

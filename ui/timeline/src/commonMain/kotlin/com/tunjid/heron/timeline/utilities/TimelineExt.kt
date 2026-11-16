@@ -48,7 +48,7 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
-import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.ui.withEmbeddingPostUriPrefix
 import com.tunjid.heron.ui.ItemSelection
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
@@ -251,8 +251,8 @@ val Timeline.sharedElementPrefix get() = source.id
 
 fun Timeline.sharedElementPrefix(
     quotingPostUri: PostUri?,
-) = source.id.withQuotingPostUriPrefix(
-    quotingPostUri = quotingPostUri,
+) = source.id.withEmbeddingPostUriPrefix(
+    embeddingPostUri = quotingPostUri,
 )
 
 fun Timeline.feedInteractionContext(

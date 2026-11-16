@@ -41,7 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
-import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -134,7 +134,7 @@ internal fun Post(
                 .padding(horizontal = 8.dp),
             content = timeline,
         )
-        val locale = Locale.current
+        val locale = LocalLocale.current
         val languageTag = remember(locale) { locale.toLanguageTag() }
         val postData = rememberUpdatedPostData(
             postActions = postActions,
@@ -498,11 +498,12 @@ private fun EmbedContent(
                 ),
             )
         },
-        onEmbeddedRecordClicked = { record ->
+        onEmbeddedRecordClicked = { record, quote ->
             data.postActions.onPostAction(
                 PostAction.OfRecord(
                     record = record,
-                    owningPostUri = data.post.uri,
+                    owningPostUri = quote?.uri ?: data.post.uri,
+                    quotingPostUri = data.post.uri.takeIf { quote != null },
                 ),
             )
         },

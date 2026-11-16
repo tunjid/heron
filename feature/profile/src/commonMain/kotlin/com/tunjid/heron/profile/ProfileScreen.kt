@@ -145,6 +145,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.profile.verificationBadge
 import com.tunjid.heron.timeline.ui.record.RecordList
+import com.tunjid.heron.timeline.ui.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelText
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
@@ -1522,8 +1523,8 @@ private fun ProfileTimeline(
                                             Action.Navigate.To(
                                                 recordDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                        quotingPostUri = action.owningPostUri,
+                                                    sharedElementPrefix = action.sharedElementPrefix(
+                                                        prefix = timelineState.timeline.sharedElementPrefix,
                                                     ),
                                                     record = action.record,
                                                 ),

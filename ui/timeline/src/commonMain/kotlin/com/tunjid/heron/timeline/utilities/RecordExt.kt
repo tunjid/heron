@@ -97,6 +97,15 @@ fun EmbeddedRecord(
                         ),
                     )
                 },
+                onEmbeddedRecordClicked = { embeddedRecord ->
+                    postActions.onPostAction(
+                        PostAction.OfRecord(
+                            record = embeddedRecord,
+                            owningPostUri = record.uri,
+                            quotingPostUri = null,
+                        ),
+                    )
+                },
                 onLinkTargetClicked = { post, linkTarget ->
                     postActions.onPostAction(
                         PostAction.OfLinkTarget(

@@ -40,11 +40,13 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
@@ -52,7 +54,7 @@ import com.tunjid.heron.data.core.models.externalEmbeddedRecord
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostAction
-import com.tunjid.heron.timeline.ui.post.PostExternal
+import com.tunjid.heron.timeline.ui.post.PostExternalEmbed
 import com.tunjid.heron.timeline.ui.post.PostHeadline
 import com.tunjid.heron.timeline.ui.post.PostMedia
 import com.tunjid.heron.timeline.ui.post.PostText
@@ -77,6 +79,7 @@ internal fun QuotedPost(
     appliedLabels: AppliedLabels,
     paneTransitionScope: PaneTransitionScope,
     onClick: () -> Unit,
+    onEmbeddedRecordClicked: (Record) -> Unit,
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
     onProfileClicked: (Post, Profile) -> Unit,
     onPostMediaClicked: (Embed.Media, Int, Post) -> Unit,
@@ -158,7 +161,7 @@ internal fun QuotedPost(
                 },
             ) {
                 when (val embed = quotedPost.embed) {
-                    is ExternalEmbed -> PostExternal(
+                    is ExternalEmbed -> PostExternalEmbed(
                         feature = embed,
                         externalRecord = quotedPost.externalEmbeddedRecord,
                         postUri = quotedPost.uri,
@@ -168,7 +171,11 @@ internal fun QuotedPost(
                         // Quotes are exclusively in blog view types
                         presentation = Timeline.Presentation.Text.WithEmbed,
                         onClick = {
-                            uriHandler.openUri(embed.uri.uri)
+                            // Events open in app, everything else opens its link.
+                            when (val externalRecord = quotedPost.externalEmbeddedRecord) {
+                                is Event -> onEmbeddedRecordClicked(externalRecord)
+                                else -> uriHandler.openUri(embed.uri.uri)
+                            }
                         },
                         onRecordInteraction = onRecordInteraction,
                     )

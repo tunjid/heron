@@ -76,6 +76,7 @@ import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
+import com.tunjid.heron.timeline.ui.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.feedInteractionContext
@@ -436,8 +437,8 @@ private fun HomeTimeline(
                         Action.Navigate.To(
                             recordDestination(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                    quotingPostUri = action.owningPostUri,
+                                sharedElementPrefix = action.sharedElementPrefix(
+                                    prefix = timelineState.timeline.sharedElementPrefix,
                                 ),
                                 record = action.record,
                             ),
