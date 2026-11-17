@@ -4,7 +4,7 @@ import sh.christian.ozone.api.generator.BinaryDataType
 plugins {
     id("kotlin-library-convention")
     id("ksp-convention")
-    id("com.tunjid.ozone.generator")
+    id("sh.christian.ozone.generator")
     kotlin("plugin.serialization")
 }
 
