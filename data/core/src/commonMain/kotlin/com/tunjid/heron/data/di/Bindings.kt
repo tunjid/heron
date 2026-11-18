@@ -102,13 +102,14 @@ import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
 import com.tunjid.heron.data.tasks.BackgroundTaskRunner
 import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
 import com.tunjid.heron.data.tasks.TaskStore
-import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.CursorQueryRefreshTracker
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.InMemoryCursorQueryRefreshTracker
 import com.tunjid.heron.data.utilities.draft.OfflinePostDraftDataSource
 import com.tunjid.heron.data.utilities.draft.PostDraftDataSource
 import com.tunjid.heron.data.utilities.inference.DelegatingInferenceManager
 import com.tunjid.heron.data.utilities.inference.LiteRtLmManager
+import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
+import com.tunjid.heron.data.utilities.multipleEntitysaver.TransactionalMultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.ThingNotificationPreferenceUpdater
@@ -127,7 +128,6 @@ import com.tunjid.heron.data.utilities.writequeue.PersistedWriteQueue
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import dev.jordond.connectivity.Connectivity
 import dev.whyoleg.cryptography.CryptographyProvider
-import dev.whyoleg.cryptography.CryptographyProviderApi
 import dev.whyoleg.cryptography.CryptographySystem
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -270,10 +270,6 @@ object DataBindings {
 
     @SingleIn(AppScope::class)
     @Provides
-    internal fun provideTidGenerator(): TidGenerator = TidGenerator()
-
-    @SingleIn(AppScope::class)
-    @Provides
     internal fun provideFileManager(
         args: DataBindingArgs,
     ): FileManager = createFileManager(
@@ -310,28 +306,14 @@ object DataBindings {
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideSessionManager(
-        httpClient: HttpClient,
-        savedStateDataSource: SavedStateDataSource,
-        identityResolver: IdentityResolver,
-        oauthRedirect: OauthRedirect,
-        authSessions: AuthSessions,
-        nonces: DPoPNonces,
-    ): SessionManager = PersistedSessionManager(
-        httpClient = httpClient,
-        savedStateDataSource = savedStateDataSource,
-        identityResolver = identityResolver,
-        oauthRedirect = oauthRedirect,
-        authSessions = authSessions,
-        nonces = nonces,
-    )
+        persistedSessionManager: PersistedSessionManager,
+    ): SessionManager = persistedSessionManager
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun providePreferenceUpdater(
-        tidGenerator: TidGenerator,
-    ): PreferenceUpdater = ThingPreferenceUpdater(
-        tidGenerator = tidGenerator,
-    )
+        thingPreferenceUpdater: ThingPreferenceUpdater,
+    ): PreferenceUpdater = thingPreferenceUpdater
 
     @SingleIn(AppScope::class)
     @Provides
@@ -391,7 +373,6 @@ object DataBindings {
         }
     }
 
-    @OptIn(CryptographyProviderApi::class)
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideCryptographyProvider(): CryptographyProvider =
@@ -517,6 +498,12 @@ object DataBindings {
             }
         }
     }
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideMultipleEntitySaverProvider(
+        transactionalMultipleEntitySaverProvider: TransactionalMultipleEntitySaverProvider,
+    ): MultipleEntitySaverProvider = transactionalMultipleEntitySaverProvider
 
     @SingleIn(AppScope::class)
     @Provides
