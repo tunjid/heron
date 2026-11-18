@@ -61,7 +61,7 @@ import com.tunjid.heron.data.core.models.VerificationPreference
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.utilities.TidGenerator
+import com.tunjid.heron.data.core.types.RecordKey
 import dev.zacsweers.metro.Inject
 import kotlin.reflect.KClass
 import sh.christian.ozone.api.AtUri
@@ -80,9 +80,7 @@ internal interface PreferenceUpdater {
 }
 
 @Inject
-internal class ThingPreferenceUpdater(
-    private val tidGenerator: TidGenerator,
-) : PreferenceUpdater {
+internal class ThingPreferenceUpdater : PreferenceUpdater {
 
     override suspend fun update(
         networkPreferences: List<PreferencesUnion>,
@@ -316,7 +314,7 @@ internal class ThingPreferenceUpdater(
                             .partition(SavedFeed::pinned)
                             .let { (pinned, saved) ->
                                 pinned + SavedFeed(
-                                    id = tidGenerator.generate(),
+                                    id = RecordKey.generate().value,
                                     type = when (this) {
                                         is Timeline.Update.OfFeedGenerator.Pin -> SavedFeedType.Feed
                                         is Timeline.Update.OfList.Pin -> SavedFeedType.List
@@ -333,7 +331,7 @@ internal class ThingPreferenceUpdater(
                         is Timeline.Update.HomeFeed.Save -> preferenceUnion.value.items.filter {
                             it.value != uri.uri
                         } + SavedFeed(
-                            id = tidGenerator.generate(),
+                            id = RecordKey.generate().value,
                             type = when (this) {
                                 is Timeline.Update.OfFeedGenerator.Save -> SavedFeedType.Feed
                                 is Timeline.Update.OfList.Save -> SavedFeedType.List

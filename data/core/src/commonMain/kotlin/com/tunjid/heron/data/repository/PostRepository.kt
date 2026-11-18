@@ -84,7 +84,6 @@ import com.tunjid.heron.data.network.models.toNetworkRecord
 import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.data.utilities.MediaBlob
-import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.add
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.distinctUntilChangedMapNotNull
@@ -222,7 +221,6 @@ internal class OfflinePostRepository(
     private val httpClient: HttpClient,
     private val videoUploadService: VideoUploadService,
     private val transactionWriter: TransactionWriter,
-    private val tidGenerator: TidGenerator,
     private val fileManager: FileManager,
     private val savedStateDataSource: SavedStateDataSource,
     private val profileLookup: ProfileLookup,
@@ -515,11 +513,11 @@ internal class OfflinePostRepository(
         val writes = mutableListOf<ApplyWritesCreate>()
         val now = Clock.System.now()
 
-        val postTid = tidGenerator.generate()
-        val rKey = RKey(postTid)
+        val postRecordKey = RecordKey.generate()
+        val rKey = RKey(postRecordKey.value)
         val postUri = PostUri(
             profileId = request.authorId,
-            postRecordKey = RecordKey(postTid),
+            postRecordKey = postRecordKey,
         )
 
         val blobsResult = request.mediaBlobs()

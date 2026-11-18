@@ -95,8 +95,14 @@ import com.tunjid.heron.data.utilities.triage
 import dev.zacsweers.metro.Inject
 import kotlin.time.Instant
 
+internal interface MultipleEntitySaverProvider {
+    suspend fun saveInTransaction(
+        block: suspend MultipleEntitySaver.() -> Unit,
+    )
+}
+
 @Inject
-class MultipleEntitySaverProvider(
+internal class TransactionalMultipleEntitySaverProvider(
     private val postDao: PostDao,
     private val labelDao: LabelDao,
     private val listDao: ListDao,
@@ -112,8 +118,8 @@ class MultipleEntitySaverProvider(
     private val rockskyDao: RockskyDao,
     private val eventDao: EventDao,
     private val transactionWriter: TransactionWriter,
-) {
-    internal suspend fun saveInTransaction(
+) : MultipleEntitySaverProvider {
+    override suspend fun saveInTransaction(
         block: suspend MultipleEntitySaver.() -> Unit,
     ) = transactionWriter.inTransaction {
         MultipleEntitySaver(
