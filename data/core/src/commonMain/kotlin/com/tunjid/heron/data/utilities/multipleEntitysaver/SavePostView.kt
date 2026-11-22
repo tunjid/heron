@@ -20,13 +20,21 @@ import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.postThreadDetailsEntityOrNull
+import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
+import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostEmbed
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
+import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.network.models.asExternalEmbedEntity
 import com.tunjid.heron.data.network.models.embedEntities
 import com.tunjid.heron.data.network.models.externalAssociatedView
 import com.tunjid.heron.data.network.models.externalRecordUris
 import com.tunjid.heron.data.network.models.postEntity
+import com.tunjid.heron.data.network.models.postExternalEmbedEntity
+import com.tunjid.heron.data.network.models.postImageEntity
+import com.tunjid.heron.data.network.models.postVideoEntity
 import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
 import com.tunjid.heron.data.network.models.quotedPostEntity
@@ -127,5 +135,27 @@ internal fun MultipleEntitySaver.add(
             viewingProfileId = viewingProfileId,
             profileView = it,
         )
+    }
+}
+
+private fun MultipleEntitySaver.associatePostEmbeds(
+    postEntity: PostEntity,
+    embedEntity: PostEmbed,
+) {
+    when (embedEntity) {
+        is ExternalEmbedEntity -> {
+            add(embedEntity)
+            add(postEntity.postExternalEmbedEntity(embedEntity))
+        }
+
+        is ImageEntity -> {
+            add(embedEntity)
+            add(postEntity.postImageEntity(embedEntity))
+        }
+
+        is VideoEntity -> {
+            add(embedEntity)
+            add(postEntity.postVideoEntity(embedEntity))
+        }
     }
 }
