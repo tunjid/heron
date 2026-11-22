@@ -166,13 +166,13 @@ internal fun PaneScaffoldState.CommonNavigationBar(
     }
 }
 
-@Composable
+context(paneScaffoldState: PaneScaffoldState)
 fun Modifier.bottomNavigationSharedBounds(
-    paneScaffoldState: PaneScaffoldState,
+    sharedContentState: SharedTransitionScope.SharedContentState,
 ): Modifier = with(paneScaffoldState) {
     when (paneState.pane) {
         ThreePane.Primary -> if (inPredictiveBack) this@bottomNavigationSharedBounds else sharedBounds(
-            sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey),
+            sharedContentState = sharedContentState,
             animatedVisibilityScope = this,
         )
 
@@ -183,6 +183,10 @@ fun Modifier.bottomNavigationSharedBounds(
         -> this@bottomNavigationSharedBounds
     }
 }
+
+@Composable
+fun PaneScaffoldState.bottomNavigationSharedBoundsContentState(): SharedTransitionScope.SharedContentState =
+    rememberSharedContentState(NavigationBarSharedElementKey)
 
 context(paneScaffoldState: PaneScaffoldState)
 private fun Modifier.commonBottomNavSharedElement(

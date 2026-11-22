@@ -123,7 +123,7 @@ internal actual fun PaneScaffoldState.PlatformNavigationRail(
                 },
                 modifier = Modifier
                     .navigationRailPosition(
-                        bottomAligned = bottomAlignsNavigationRail,
+                        paddingValues = navigationRailPaddingValues(),
                     )
                     .centerOnSystemVerticalBar(
                         railBoxWidth = navigationRailWidth,
