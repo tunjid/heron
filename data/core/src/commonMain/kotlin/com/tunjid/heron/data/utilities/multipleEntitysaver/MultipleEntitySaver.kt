@@ -71,7 +71,6 @@ import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
-import com.tunjid.heron.data.database.entities.postembeds.PostEmbed
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedProfilesEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedRecordEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
@@ -85,9 +84,6 @@ import com.tunjid.heron.data.database.entities.profile.ProfileLinkEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileVerificationEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
-import com.tunjid.heron.data.network.models.postExternalEmbedEntity
-import com.tunjid.heron.data.network.models.postImageEntity
-import com.tunjid.heron.data.network.models.postVideoEntity
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.Collections.isStubbedId
 import com.tunjid.heron.data.utilities.LazyList
@@ -537,28 +533,6 @@ internal class MultipleEntitySaver(
         }
     }
 
-    fun MultipleEntitySaver.associatePostEmbeds(
-        postEntity: PostEntity,
-        embedEntity: PostEmbed,
-    ) {
-        when (embedEntity) {
-            is ExternalEmbedEntity -> {
-                add(embedEntity)
-                add(postEntity.postExternalEmbedEntity(embedEntity))
-            }
-
-            is ImageEntity -> {
-                add(embedEntity)
-                add(postEntity.postImageEntity(embedEntity))
-            }
-
-            is VideoEntity -> {
-                add(embedEntity)
-                add(postEntity.postVideoEntity(embedEntity))
-            }
-        }
-    }
-
     fun add(entity: TimelineItemEntity) = timelineItemEntities.add(entity)
 
     fun add(entity: PostEntity) = postEntities.add(entity)
@@ -655,15 +629,15 @@ internal class MultipleEntitySaver(
     fun add(entity: PostExternalAssociatedRecordEntity) = postExternalAssociatedRecordEntities.add(entity)
     fun add(entity: PostExternalAssociatedProfilesEntity) = postExternalAssociatedProfileEntities.add(entity)
 
-    private fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
+    fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
 
-    private fun add(entity: PostExternalEmbedEntity) = postExternalEmbedEntities.add(entity)
+    fun add(entity: PostExternalEmbedEntity) = postExternalEmbedEntities.add(entity)
 
-    private fun add(entity: ImageEntity) = imageEntities.add(entity)
+    fun add(entity: ImageEntity) = imageEntities.add(entity)
 
-    private fun add(entity: PostImageEntity) = postImageEntities.add(entity)
+    fun add(entity: PostImageEntity) = postImageEntities.add(entity)
 
-    private fun add(entity: VideoEntity) = videoEntities.add(entity)
+    fun add(entity: VideoEntity) = videoEntities.add(entity)
 
-    private fun add(entity: PostVideoEntity) = postVideoEntities.add(entity)
+    fun add(entity: PostVideoEntity) = postVideoEntities.add(entity)
 }

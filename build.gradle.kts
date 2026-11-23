@@ -56,7 +56,17 @@ allprojects {
             )
             targetExclude("**/build/**")
             ktlint(rootProject.libs.ktlint.get().version)
+                .customRuleSets(listOf("com.tunjid.heron:ktlint-rules:1.0"))
         }
+    }
+    // Spotless neither builds the rule set's jar nor treats it as an input, so without this,
+    // edits to the rules run against a stale jar or are skipped as up to date.
+    tasks.matching { it.name.startsWith("spotless") }.configureEach {
+        dependsOn(gradle.includedBuild("build-logic").task(":ktlint-rules:jar"))
+        inputs.dir(rootProject.file("build-logic/ktlint-rules/src/main"))
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+            .withPropertyName("heronKtlintRules")
+        notCompatibleWithConfigurationCache("Heron's ktlint rule set jar is built during execution")
     }
 }
 

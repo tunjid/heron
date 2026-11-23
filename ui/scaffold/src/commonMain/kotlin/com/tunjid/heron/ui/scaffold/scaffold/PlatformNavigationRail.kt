@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -87,7 +88,7 @@ internal fun PaneScaffoldState.CommonNavigationRail(
         Column(
             modifier = Modifier
                 .navigationRailPosition(
-                    bottomAligned = bottomAlignsNavigationRail,
+                    paddingValues = navigationRailPaddingValues(),
                 )
                 .constrainedSizePlacement(
                     orientation = Orientation.Horizontal,
@@ -134,22 +135,18 @@ internal fun PaneScaffoldState.CommonNavigationRail(
     }
 }
 
-/**
- * Centers the rail vertically, or aligns it to the bottom above the navigation bar inset when
- * [bottomAligned].
- */
-@Composable
-context(boxScope: BoxScope)
+context(
+    paneScaffoldState: PaneScaffoldState,
+    boxScope: BoxScope,
+)
 internal fun Modifier.navigationRailPosition(
-    bottomAligned: Boolean,
+    paddingValues: PaddingValues,
 ): Modifier = with(boxScope) {
-    if (bottomAligned) align(Alignment.BottomCenter)
-        .padding(
-            top = NavRailVerticalPadding,
-            bottom = UiTokens.navigationBarHeight + NavRailVerticalPadding,
-        )
-    else align(Alignment.Center)
-        .padding(vertical = NavRailVerticalPadding)
+    when {
+        paneScaffoldState.bottomAlignsNavigationRail -> align(Alignment.BottomCenter)
+        else -> align(Alignment.Center)
+    }
+        .padding(paddingValues)
 }
 
 context(paneScaffoldState: PaneScaffoldState)
@@ -171,6 +168,27 @@ internal fun Modifier.centerOnSystemVerticalBar(
 internal fun PaneScaffoldState.navRailPlacesAtStart(
     layoutDirection: LayoutDirection,
 ): Boolean = (navRailEdge == NavRailEdge.Start) == (layoutDirection == LayoutDirection.Ltr)
+
+@Composable
+internal fun PaneScaffoldState.navigationRailPaddingValues(): PaddingValues {
+    val navigationBarHeight = UiTokens.navigationBarHeight
+    return remember(
+        this,
+        navigationBarHeight,
+    ) {
+        object : PaddingValues {
+            override fun calculateBottomPadding(): Dp =
+                if (bottomAlignsNavigationRail) navigationBarHeight + NavRailVerticalPadding
+                else NavRailVerticalPadding
+
+            override fun calculateLeftPadding(layoutDirection: LayoutDirection): Dp = 0.dp
+
+            override fun calculateRightPadding(layoutDirection: LayoutDirection): Dp = 0.dp
+
+            override fun calculateTopPadding(): Dp = NavRailVerticalPadding
+        }
+    }
+}
 
 @Composable
 private fun AppScaffoldState.shouldElevateNavRail(): Boolean = remember(this) {

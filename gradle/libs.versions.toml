@@ -30,6 +30,8 @@ compose-multiplatform-material3 = "1.13.0-rc01"
 firebase-bom-version = "35.1.0"
 google-services = "4.5.0"
 junit = "4.13.2"
+junit-platform = "1.14.1"
+slf4j = "2.0.17"
 kotlin = "2.4.21"
 kotlinx-coroutines = "1.11.0"
 kotlinx-datetime = "0.8.0"
@@ -74,6 +76,8 @@ burst = { module = "app.cash.burst:burst", version.ref = "burst" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+slf4jSimple = { group = "org.slf4j", name = "slf4j-simple", version.ref = "slf4j" }
+junitPlatformLauncher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit-platform" }
 andrew-bailey-difference = { group = "dev.andrewbailey.difference", name = "difference", version = "1.1.1" }
 android-desugarJdkLibs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "android-desugar-jdk-libs" }
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
@@ -161,6 +165,9 @@ kotlinx-serialization-cbor = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-protobuf = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-protobuf", version.ref = "kotlinx-serialization" }
 ktlint = { group = "com.pinterest.ktlint", name = "ktlint-cli", version.ref = "ktlint-cli" }
+ktlintCliRulesetCore = { group = "com.pinterest.ktlint", name = "ktlint-cli-ruleset-core", version.ref = "ktlint-cli" }
+ktlintRuleEngineCore = { group = "com.pinterest.ktlint", name = "ktlint-rule-engine-core", version.ref = "ktlint-cli" }
+ktlintTest = { group = "com.pinterest.ktlint", name = "ktlint-test", version.ref = "ktlint-cli" }
 ktor-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }

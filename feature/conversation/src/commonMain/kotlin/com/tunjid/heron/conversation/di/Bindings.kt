@@ -48,6 +48,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavigationSharedBounds
+import com.tunjid.heron.ui.scaffold.scaffold.bottomNavigationSharedBoundsContentState
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarTransparencyFactor
@@ -196,7 +197,9 @@ internal fun Route(
                     .padding(horizontal = 8.dp)
                     .imePadding()
                     .windowInsetsPadding(WindowInsets.platformNavigationBars)
-                    .bottomNavigationSharedBounds(this),
+                    .bottomNavigationSharedBounds(
+                        sharedContentState = bottomNavigationSharedBoundsContentState(),
+                    ),
                 inputText = state.inputText,
                 pendingRecord = state.sharedRecord.pendingRecord,
                 sendMessage = remember(

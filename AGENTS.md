@@ -54,11 +54,11 @@ Every `feature:*` module has the same four parts. `feature/feed` is the referenc
   `started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed)`.
 - **`<Name>Screen.kt`** — a composable taking `state`, `actions: (Action) -> Unit`, and
   `PaneScaffoldState`.
-- **`di/Bindings.kt`** — a `@BindingContainer` exposing two binding sets:
-  - `<Name>Bindings` contributing the `PaneEntry` screen factory (`@IntoMap`) into the app's
-    `entryMap`, and
-  - `<Name>NavigationBindings` contributing a `RouteMatcher` (`@IntoMap`, via `urlRouteMatcher`)
-    into the `routeMatcherMap`.
+- **`di/Bindings.kt`** — two `@BindingContainer` objects that register themselves with the graphs:
+  - `<Name>Bindings`, `@ContributesTo(AppScope::class)`, contributing the `PaneEntry` screen
+    factory and the ViewModel's `RouteStateHolderInitializer` (both `@IntoMap`), and
+  - `<Name>NavigationBindings`, `@ContributesTo(NavigationScope::class)`, contributing a
+    `RouteMatcher` (`@IntoMap`, via `urlRouteMatcher`) into the `routeMatcherMap`.
 
 See [README · State production](README.md#state-production) for the Action-key parallelism model and
 the Mutator pipeline.
@@ -66,20 +66,22 @@ the Mutator pipeline.
 ## Recipe: add a new feature
 
 Metro builds and verifies the DI graph at **compile time**, so a missed wiring point is a build
-error with a clear message — *building the feature is the test*. The four places to touch:
+error with a clear message — *building the feature is the test*. The three places to touch:
 
-1. **Create `feature/<name>/`** with a `build.gradle.kts` applying `id("kotlin-library-convention")`
-   plus the Compose and serialization plugins (copy `feature/template/build.gradle.kts`), and the
-   four source files above.
+1. **Create `feature/<name>/`** with the four source files above and a `build.gradle.kts` copied
+   from [`feature/feed/build.gradle.kts`](feature/feed/build.gradle.kts), not `feature/template`
+   (the shared abstraction features depend on). It applies `kotlin-library-convention`,
+   `feature-module-convention` and `ksp-convention`. `feature-module-convention` brings Compose,
+   serialization, `@Snapshottable` and the shared `data`/`ui`/`ui:scaffold` dependencies, so list
+   only what's extra. Set the `androidLibrary` namespace to `com.tunjid.heron.feature.<name>`.
 2. **Register the module** in [`settings.gradle.kts`](settings.gradle.kts) — add `":feature:<name>"`
    to the `include(...)` block (alongside `":feature:feed"`).
-3. **Add the bindings to the graph**: `@Includes <name>Bindings` in
-   [`AppGraph`](apps/composeApp/src/commonMain/kotlin/com/tunjid/heron/di/AppGraph.kt) and
-   `@Includes <name>NavigationBindings` in
-   [`AppNavigationGraph`](apps/composeApp/src/commonMain/kotlin/com/tunjid/heron/di/AppNavigationGraph.kt).
-4. **Instantiate both** in the graph-factory call in
-   [`EntryPoint.kt`](apps/composeApp/src/commonMain/kotlin/com/tunjid/heron/EntryPoint.kt) (the
-   `<name>Bindings = <Name>Bindings(...)` list).
+3. **Depend on it from the app**: add `implementation(project(":feature:<name>"))` to the
+   `commonMain` dependencies in [`apps/composeApp/build.gradle.kts`](apps/composeApp/build.gradle.kts).
+   Metro only aggregates `@ContributesTo` bindings it can see on the app's classpath.
+
+Don't edit `AppGraph`, `AppNavigationGraph` or `EntryPoint.kt`; the `@ContributesTo` annotations in
+`di/Bindings.kt` are the wiring.
 
 ## Build, test & format
 
@@ -124,6 +126,61 @@ run. See [README · Building](README.md#building).
   positional brevity.
 - **Keep shared code in `commonMain`;** only put platform-specific code in `androidMain`/`iosMain`/
   `desktopMain`.
+
+## Rules
+
+These are agent specific rules. Human-facing contribution rules
+(PR splitting, comment hygiene, authorship) live in [CONTRIBUTING.md](CONTRIBUTING.md); read it too.
+
+**Before touching `data/*`, read [data/core/AGENTS.md](data/core/AGENTS.md).** It has the
+data-layer rules (MultipleEntitySaver, DAOs, writes, SavedState) with the implementation to copy for
+each.
+
+**Scope**
+
+- **Stay in the layer you were asked to work in.** A data-layer pass touches no UI or ViewModel
+  code. Defer anything speculative.
+- **One refactor per change.** A mechanical refactor lands on its own, before the feature that
+  motivated it.
+- **A "why" question isn't a request to change anything.** Explain; don't edit.
+- **No new conventions on autonomous runs.** Copy the nearest existing pattern. If a new
+  cross-cutting mechanism seems needed, propose it in your summary instead of building it.
+
+**Design**
+
+- **Solve new problems with the types you already have.** Before adding classes, check whether an
+  existing model already carries what you need.
+- **Fold redundant types into what exists.** No interface with a single implementation, no
+  capability flag every implementation would set, no pass-through wrapper. A type that could be a
+  lambda should be a lambda. Utilities with a real seam stay an interface plus an implementation.
+- **Don't leak a concern into a lower or shared layer.** `data:*` modules take no UI or Compose
+  resource dependencies. Feature-only classes stay `internal` to their feature. Platform quirks stay
+  in the module that owns them.
+- **One concern in one place.** Don't split one responsibility across two components.
+- **Use `expect`/`actual` only for real platform divergence.** Never for something
+  `Platform.current` or common code can answer.
+- **Context parameters are for access control** (e.g. `AuthSessions`). Pass everything else
+  explicitly.
+- **Composition locals are for config** (e.g. `MediaConfig`), not scaffold geometry.
+
+**Naming**
+
+- Drop needless prefixes, keep names consistent with related types, and use plural table names.
+- Agree on a name before refactoring to it.
+
+**Build-enforced**
+
+Custom ktlint rules in [`build-logic/ktlint-rules`](build-logic/ktlint-rules) run as part of
+`./gradlew spotlessCheck`. You can't autocorrect them away:
+
+| Rule | Enforces |
+|---|---|
+| `heron:dao-reactive-reads` | A `@Dao` `SELECT` returns a `Flow` and isn't `suspend`. Writes are exempt. |
+| `heron:entity-saver-shape` | `MultipleEntitySaver` only exposes `add`, `remove` and `flushPendingOperations`. Each `add`/`remove` appends one entity to a `LazyList`. Triage belongs in the flush, and intent is expressed with entities (e.g. stubbed sentinels), not new operations. |
+| `heron:no-scope-on-impl` | `@Inject` classes carry no `@SingleIn`. Scope goes on the provider in `di/Bindings.kt`. |
+| `heron:no-composable-modifiers` | No `@Composable` `Modifier` extensions and no `Modifier.composed { }`. Build modifiers from `Modifier.Node` elements. |
+
+Rule tests: `./gradlew -p build-logic :ktlint-rules:test`.
 
 ## Don't hand-edit / generated
 
