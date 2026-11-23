@@ -66,6 +66,7 @@ allprojects {
         inputs.dir(rootProject.file("build-logic/ktlint-rules/src/main"))
             .withPathSensitivity(PathSensitivity.RELATIVE)
             .withPropertyName("heronKtlintRules")
+        notCompatibleWithConfigurationCache("Heron's ktlint rule set jar is built during execution")
     }
 }
 
