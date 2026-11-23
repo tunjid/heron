@@ -207,6 +207,7 @@
     <string name="writable_rsvp_event">event RSVP</string>
     <string name="writable_link_document">document link</string>
     <string name="writable_attach_post">comments post</string>
+    <string name="writable_upsert_event">event</string>
     <string name="writable_thread_gate_update">post reply update</string>
     <string name="writable_profile_status_update">profile status update</string>
     <string name="writable_conversation_update">conversation update</string>
@@ -241,6 +242,7 @@
     <string name="writable_description_unlinking_document">Unlinking document from post</string>
     <string name="writable_description_attaching_post">Attaching post for comments</string>
     <string name="writable_description_detaching_post">Detaching post from comments</string>
+    <string name="writable_description_saving_event">Saving event</string>
     <string name="writable_description_blocking_profile">Blocking a profile</string>
     <string name="writable_description_unblocking_profile">Unblocking a profile</string>
     <string name="writable_description_muting_profile">Muting a profile</string>

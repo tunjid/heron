@@ -551,7 +551,10 @@ private suspend fun composeRequest(
         reply = reply,
         embeddedRecordReference = embeddedRecordReference,
         embeddedMedia = media.mapNotNull { item ->
-            fileManager.cacheWithoutRestrictions(item)
+            fileManager.cacheWithoutRestrictions(
+                restrictedFile = item,
+                maxSizeInBytes = MAX_POST_IMAGE_SIZE_IN_BYTES,
+            )
         },
         allowed = allowed,
         linkPreview = linkPreview,
@@ -589,3 +592,6 @@ private fun Flow<Action.ClearSuggestions>.launchClearSuggestionsMutations(
 
 private val SEARCH_DEBOUNCE = 300.milliseconds
 const val MAX_SUGGESTED_PROFILES = 5
+
+// The blob limit for an image in app.bsky.embed.images.
+private const val MAX_POST_IMAGE_SIZE_IN_BYTES = 2_000_000L

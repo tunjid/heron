@@ -63,6 +63,7 @@ import heron.ui.timeline.generated.resources.writable_unblock
 import heron.ui.timeline.generated.resources.writable_unfollow
 import heron.ui.timeline.generated.resources.writable_unlike
 import heron.ui.timeline.generated.resources.writable_unmute
+import heron.ui.timeline.generated.resources.writable_upsert_event
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
@@ -233,6 +234,10 @@ fun Writable.writeStatusMessage(
             is Writable.UpdatePostReference -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_attach_post),
+            )
+            is Writable.EventPut -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_upsert_event),
             )
             is Writable.StatusUpdate -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),

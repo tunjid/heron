@@ -121,6 +121,8 @@ data class Post(
             val linkPreview: LinkPreview? = null,
             @ProtoNumber(8)
             val langs: List<String> = emptyList(),
+            @ProtoNumber(9)
+            val event: Event.Put? = null,
         )
 
         @Serializable

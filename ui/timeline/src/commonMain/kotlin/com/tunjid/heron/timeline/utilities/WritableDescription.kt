@@ -75,6 +75,7 @@ import heron.ui.timeline.generated.resources.writable_description_removing_repos
 import heron.ui.timeline.generated.resources.writable_description_reposting
 import heron.ui.timeline.generated.resources.writable_description_responding_to_event
 import heron.ui.timeline.generated.resources.writable_description_saving_draft
+import heron.ui.timeline.generated.resources.writable_description_saving_event
 import heron.ui.timeline.generated.resources.writable_description_sending_feed_feedback
 import heron.ui.timeline.generated.resources.writable_description_sending_message
 import heron.ui.timeline.generated.resources.writable_description_subscribing_publication
@@ -225,6 +226,11 @@ fun Writable.describe(): WritableDescription =
                 summary = null,
             )
         }
+        is Writable.EventPut -> WritableDescription(
+            icon = HeronIcons.Regular.CalendarMonth,
+            title = Resource(Res.string.writable_description_saving_event),
+            summary = null,
+        )
         is Writable.Restriction -> when (restriction) {
             is Profile.Restriction.Block.Add -> WritableDescription(
                 icon = HeronIcons.Regular.Block,

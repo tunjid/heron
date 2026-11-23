@@ -117,7 +117,8 @@ sealed interface Writable {
             get() = "create-post-$request"
 
         override val shouldBeProcessedInBackground: Boolean
-            get() = request.metadata.embeddedMedia.isNotEmpty()
+            get() = request.metadata.embeddedMedia.isNotEmpty() ||
+                request.metadata.event?.thumbnail != null
 
         override suspend fun WriteQueue.write(): Outcome =
             postRepository.createPost(
@@ -373,6 +374,21 @@ sealed interface Writable {
 
         override suspend fun WriteQueue.write(): Outcome =
             recordRepository.updatePostReference(reference)
+    }
+
+    @Serializable
+    data class EventPut(
+        val put: Event.Put,
+    ) : Writable {
+
+        override val queueId: String
+            get() = "put-event-${put.uri}"
+
+        override val shouldBeProcessedInBackground: Boolean
+            get() = put.thumbnail != null
+
+        override suspend fun WriteQueue.write(): Outcome =
+            recordRepository.putEvent(put)
     }
 
     @Serializable

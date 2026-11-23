@@ -54,6 +54,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.externalEmbed
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.DraftId
@@ -68,6 +69,7 @@ import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.TransactionWriter
+import com.tunjid.heron.data.database.daos.EventDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.partialUpsert
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
@@ -83,6 +85,7 @@ import com.tunjid.heron.data.network.VideoUploadService
 import com.tunjid.heron.data.network.models.toNetworkRecord
 import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
+import com.tunjid.heron.data.repository.records.putEventRecord
 import com.tunjid.heron.data.utilities.MediaBlob
 import com.tunjid.heron.data.utilities.add
 import com.tunjid.heron.data.utilities.asJsonContent
@@ -90,6 +93,7 @@ import com.tunjid.heron.data.utilities.distinctUntilChangedMapNotNull
 import com.tunjid.heron.data.utilities.draft.PostDraftDataSource
 import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.mediaFileUploads
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -98,23 +102,18 @@ import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toOutcome
-import com.tunjid.heron.data.utilities.with
+import com.tunjid.heron.data.utilities.uploadFileBlob
 import com.tunjid.heron.data.utilities.withRefresh
 import com.tunjid.heron.data.utilities.writequeue.WriteProgress
-import com.tunjid.heron.data.utilities.writequeue.reportingUploadProgress
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.request.prepareGet
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
-import io.ktor.utils.io.ByteReadChannel
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -226,6 +225,7 @@ internal class OfflinePostRepository(
     private val profileLookup: ProfileLookup,
     private val recordResolver: RecordResolver,
     private val postDraftDataSource: PostDraftDataSource,
+    private val eventDao: EventDao,
 ) : PostRepository {
 
     override fun likedBy(
@@ -520,16 +520,44 @@ internal class OfflinePostRepository(
             postRecordKey = postRecordKey,
         )
 
-        val blobsResult = request.mediaBlobs()
+        val blobsResult = fileManager.mediaFileUploads(
+            files = request.metadata.embeddedMedia,
+        ) { file ->
+            when (file) {
+                is File.Media.Photo -> networkService.uploadFileBlob(
+                    file = file,
+                )
+
+                is File.Media.Video -> videoUploadService.uploadVideo(
+                    file = file,
+                )
+            }
+        }
         val blobs = blobsResult.getOrNull() ?: return@currentSession Outcome.Failure(
             requireNotNull(blobsResult.exceptionOrNull()),
         )
 
+        // Write an event if applicable. If that fails, so does the post.
+        // The post then links to the event's atmo.rsvp page and reuses its thumbnail.
+        val event = request.metadata.event
+        val eventThumbBlob = event?.let { upsert ->
+            networkService.putEventRecord(
+                put = upsert,
+                signedInProfileId = signedInProfileId,
+                fileManager = fileManager,
+                eventDao = eventDao,
+                multipleEntitySaverProvider = multipleEntitySaverProvider,
+            ).getOrElse { return@currentSession Outcome.Failure(it) }
+        }
+
         // An external link card only applies when the post has no media.
-        val linkPreview = request.metadata.linkPreview?.takeIf {
+        val linkPreview = when (event) {
+            null -> request.metadata.linkPreview
+            else -> LinkPreview(embed = event.externalEmbed)
+        }?.takeIf {
             blobs.isEmpty()
         }
-        val externalThumbBlob = linkPreview?.embed
+        val externalThumbBlob = if (event != null) eventThumbBlob else linkPreview?.embed
             ?.thumb
             ?.uri
             ?.let {
@@ -579,7 +607,7 @@ internal class OfflinePostRepository(
             currentCoroutineContext()[WriteProgress]?.onPublished()
             // Only delete the uploaded media once the post has been created, so the
             // write can be safely retried with the source files intact if it fails.
-            request.metadata.embeddedMedia.forEach { file ->
+            (request.metadata.embeddedMedia + listOfNotNull(event?.thumbnail)).forEach { file ->
                 runCatchingUnlessCancelled {
                     fileManager.delete(file)
                 }
@@ -898,49 +926,6 @@ internal class OfflinePostRepository(
                 put("via", Platform.current.description)
             }
     }
-
-    private suspend fun Post.Create.Request.mediaBlobs(): Result<List<MediaBlob>> =
-        runCatchingUnlessCancelled {
-            // Register every item before any upload starts, so the reported total never grows.
-            val writeProgress = currentCoroutineContext()[WriteProgress]
-            if (writeProgress != null) metadata.embeddedMedia.forEach { media ->
-                writeProgress.append(
-                    file = media,
-                    sizeInBytes = fileManager.size(media),
-                    // The video service encodes videos after upload.
-                    processedRemotely = media is File.Media.Video,
-                )
-            }
-            val blobs = coroutineScope {
-                metadata.embeddedMedia.map { media ->
-                    async {
-                        // Media rehydrated from a draft arrives without dimensions, as a draft
-                        // stores only a path and its alt text. Read them back off the file so
-                        // the embed still declares an aspect ratio.
-                        val file = fileManager.withDimensionsOrSelf(media)
-                        when (file) {
-                            is File.Media.Photo -> with(fileManager) {
-                                networkService.uploadFileBlob(file = file)
-                            }
-                            is File.Media.Video -> videoUploadService.uploadVideo(
-                                file = file,
-                            )
-                        }
-                            .map(file::with)
-                    }
-                }
-                    .awaitAll()
-                    .mapNotNull(Result<MediaBlob?>::getOrNull)
-            }
-
-            val mediaToUploadCount = metadata.embeddedMedia.size
-
-            if (mediaToUploadCount > 0 && blobs.size != mediaToUploadCount) {
-                throw Exception("Media upload failed")
-            }
-
-            return@runCatchingUnlessCancelled blobs
-        }
 }
 
 private fun List<PopulatedProfileEntity>.asExternalModels() =
@@ -948,16 +933,6 @@ private fun List<PopulatedProfileEntity>.asExternalModels() =
 
 private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
     Pair(validationStatus is CreateRecordValidationStatus.Valid, uri.atUri)
-
-context(fileManager: FileManager)
-private suspend fun NetworkService.uploadFileBlob(
-    file: File,
-): Result<Blob> = runCatchingWithMonitoredNetworkRetry {
-    fileManager.source(file).use {
-        uploadBlob(ByteReadChannel(it.reportingUploadProgress(file = file)))
-            .map(UploadBlobResponse::blob)
-    }
-}
 
 private suspend fun NetworkService.pipeNetworkBlob(
     data: HttpResponse,
