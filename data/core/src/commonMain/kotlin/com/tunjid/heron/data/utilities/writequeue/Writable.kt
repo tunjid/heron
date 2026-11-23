@@ -24,12 +24,14 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.RecordPostReference
 import com.tunjid.heron.data.core.models.Rsvp
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardRecommendation
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.asRecordPostReference
 import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.types.DraftId
 import com.tunjid.heron.data.core.types.RecordKey
@@ -262,8 +264,9 @@ sealed interface Writable {
             override val queueId: String
                 get() = "document-post-ref-$reference"
 
+            // Superseded by [Writable.UpdatePostReference]; kept so queued writes still decode.
             override suspend fun WriteQueue.write(): Outcome =
-                recordRepository.updateDocumentPostRef(reference)
+                recordRepository.updatePostReference(reference.asRecordPostReference())
         }
     }
 
@@ -358,6 +361,18 @@ sealed interface Writable {
 
         override suspend fun WriteQueue.write(): Outcome =
             notificationRepository.updateNotificationPreferences(updates)
+    }
+
+    @Serializable
+    data class UpdatePostReference(
+        val reference: RecordPostReference,
+    ) : Writable {
+
+        override val queueId: String
+            get() = "post-ref-$reference"
+
+        override suspend fun WriteQueue.write(): Outcome =
+            recordRepository.updatePostReference(reference)
     }
 
     @Serializable

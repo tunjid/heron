@@ -315,6 +315,7 @@ private fun Writable.embeddableRecordUri(): EmbeddableRecordUri? =
         is Writable.StandardSite.Recommend -> this.create.documentUri
         is Writable.RsvpUpdate -> null
         is Writable.StandardSite.UpdatePostReference -> this.reference.documentUri
+        is Writable.UpdatePostReference -> this.reference.recordUri
         is Writable.StatusUpdate -> null
         is Writable.TimelineUpdate -> null
     }

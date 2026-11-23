@@ -140,10 +140,6 @@ interface StandardSiteRecordOperations {
     suspend fun createRecommendation(
         create: StandardRecommendation.Create,
     ): Outcome
-
-    suspend fun updateDocumentPostRef(
-        reference: StandardDocument.PostReference,
-    ): Outcome
 }
 
 @Inject
@@ -507,82 +503,6 @@ internal class OfflineFirstStandardSiteRecordOperations(
                     recommendation = recommendation,
                     sortedAt = create.sortedAt,
                     viewingProfileId = signedInProfileId,
-                )
-            }
-        }
-            .toOutcome()
-    } ?: expiredSessionOutcome()
-
-    override suspend fun updateDocumentPostRef(
-        reference: StandardDocument.PostReference,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
-
-        // The document record lives in its author's repo, so only its author can
-        // rewrite it. Refuse if the signed-in user does not own the document.
-        val documentProfileId = reference.documentUri.profileId()
-        if (documentProfileId != signedInProfileId) {
-            return@inCurrentProfileSession UnauthorizedException(
-                signedInProfileId = signedInProfileId,
-                profileId = documentProfileId,
-            ).asFailureOutcome()
-        }
-
-        val repo = Did(signedInProfileId.id)
-        val collection = Nsid(StandardDocumentUri.NAMESPACE)
-        val rkey = RKey(reference.documentUri.recordKey.value)
-
-        // Linking sets the strong ref; unlinking clears it.
-        val newPostRef = when (reference) {
-            is StandardDocument.PostReference.Link -> StrongRef(
-                uri = AtUri(reference.postUri.uri),
-                cid = Cid(reference.postCid.id),
-            )
-            is StandardDocument.PostReference.Unlink -> null
-        }
-
-        // Read the current record first so the cover image blob and any other
-        // fields are preserved; only the bskyPostRef is changed.
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            getRecord(
-                GetRecordQueryParams(
-                    repo = repo,
-                    collection = collection,
-                    rkey = rkey,
-                ),
-            )
-        }.mapCatchingUnlessCancelled { recordResponse ->
-            val current = recordResponse.value.decodeAs<Document>()
-            val updated = current.copy(bskyPostRef = newPostRef)
-            val putResponse = networkService.runCatchingWithMonitoredNetworkRetry {
-                putRecord(
-                    PutRecordRequest(
-                        repo = repo,
-                        collection = collection,
-                        rkey = rkey,
-                        swapRecord = recordResponse.cid,
-                        record = updated.asJsonContent(Document.serializer()),
-                    ),
-                )
-            }.getOrThrow()
-
-            // Persist the change locally without relying on the AppView, which lags
-            // behind the PDS write.
-            val linkedPost = reference as? StandardDocument.PostReference.Link
-            val cachedEntity = standardSiteDao.documents(
-                viewingProfileId = signedInProfileId.id,
-                uris = setOf(reference.documentUri),
-            )
-                .first()
-                .firstOrNull()
-                ?.entity
-            if (cachedEntity != null) multipleEntitySaverProvider.saveInTransaction {
-                add(
-                    cachedEntity.copy(
-                        cid = putResponse.cid.cid.let(::StandardDocumentId),
-                        bskyPostRefUri = linkedPost?.postUri,
-                        bskyPostRefCid = linkedPost?.postCid,
-                    ),
                 )
             }
         }

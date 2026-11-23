@@ -6,6 +6,7 @@ import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.RecordPostReference
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -45,11 +46,13 @@ import com.tunjid.heron.ui.text.message
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.writable_description_accepting_conversation
 import heron.ui.timeline.generated.resources.writable_description_adding_to_list
+import heron.ui.timeline.generated.resources.writable_description_attaching_post
 import heron.ui.timeline.generated.resources.writable_description_blocking_profile
 import heron.ui.timeline.generated.resources.writable_description_bookmarking_post
 import heron.ui.timeline.generated.resources.writable_description_creating_post
 import heron.ui.timeline.generated.resources.writable_description_deleting_draft
 import heron.ui.timeline.generated.resources.writable_description_deleting_record
+import heron.ui.timeline.generated.resources.writable_description_detaching_post
 import heron.ui.timeline.generated.resources.writable_description_following_profile
 import heron.ui.timeline.generated.resources.writable_description_following_starter_pack
 import heron.ui.timeline.generated.resources.writable_description_leaving_conversation
@@ -207,6 +210,18 @@ fun Writable.describe(): WritableDescription =
             is StandardDocument.PostReference.Unlink -> WritableDescription(
                 icon = HeronIcons.Regular.LinkOff,
                 title = Resource(Res.string.writable_description_unlinking_document),
+                summary = null,
+            )
+        }
+        is Writable.UpdatePostReference -> when (reference) {
+            is RecordPostReference.Link -> WritableDescription(
+                icon = HeronIcons.Regular.Link,
+                title = Resource(Res.string.writable_description_attaching_post),
+                summary = null,
+            )
+            is RecordPostReference.Unlink -> WritableDescription(
+                icon = HeronIcons.Regular.LinkOff,
+                title = Resource(Res.string.writable_description_detaching_post),
                 summary = null,
             )
         }

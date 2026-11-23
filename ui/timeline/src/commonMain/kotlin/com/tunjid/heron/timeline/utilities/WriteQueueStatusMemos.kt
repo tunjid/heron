@@ -27,6 +27,7 @@ import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.writable_add_list_member
+import heron.ui.timeline.generated.resources.writable_attach_post
 import heron.ui.timeline.generated.resources.writable_block
 import heron.ui.timeline.generated.resources.writable_bookmark
 import heron.ui.timeline.generated.resources.writable_bookmark_removal
@@ -228,6 +229,10 @@ fun Writable.writeStatusMessage(
             is Writable.StandardSite.UpdatePostReference -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_link_document),
+            )
+            is Writable.UpdatePostReference -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_attach_post),
             )
             is Writable.StatusUpdate -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
