@@ -28,14 +28,11 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.PolygonShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -65,7 +62,7 @@ import com.tunjid.heron.media.picker.MediaType
 import com.tunjid.heron.media.picker.rememberMediaPicker
 import com.tunjid.heron.timeline.utilities.formatHour
 import com.tunjid.heron.timeline.utilities.formatWeekdayDate
-import com.tunjid.heron.ui.TabsState
+import com.tunjid.heron.ui.Chip
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.Image
 import com.tunjid.heron.ui.shapes.roundedRectangle
@@ -235,7 +232,7 @@ private fun EventEditorBottomSheet(
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 EventModes.forEach { (eventMode, label) ->
-                    EditorChip(
+                    Chip(
                         selected = editorState.mode == eventMode,
                         text = stringResource(label),
                         onClick = { accept(EventEditorAction.Update.Mode(eventMode)) },
@@ -343,12 +340,12 @@ private fun DateTimeRow(
             text = stringResource(label),
             style = MaterialTheme.typography.bodyLarge,
         )
-        EditorChip(
+        Chip(
             selected = instant != null,
             text = instant?.formatWeekdayDate() ?: stringResource(Res.string.event_pick_date),
             onClick = { showDatePicker = true },
         )
-        if (instant != null && current != null) EditorChip(
+        if (instant != null && current != null) Chip(
             selected = true,
             text = instant.formatHour(),
             onClick = { timePickerDate = current.date },
@@ -424,38 +421,7 @@ private fun DateTimeRow(
     }
 }
 
-/**
- * Matches the RSVP chips on the event card.
- */
-@Composable
-private fun EditorChip(
-    selected: Boolean,
-    text: String,
-    onClick: () -> Unit,
-) {
-    FilterChip(
-        shape = EditorChipShape,
-        border = null,
-        selected = selected,
-        colors = FilterChipDefaults.filterChipColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            selectedContainerColor = TabsState.TabBackgroundColor,
-            labelColor = MaterialTheme.colorScheme.outline,
-            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        ),
-        onClick = onClick,
-        label = {
-            Text(
-                text = text,
-                maxLines = 1,
-            )
-        },
-    )
-}
-
 private val ThumbnailShape = PolygonShape.roundedRectangle(0.08f)
-
-private val EditorChipShape = RoundedCornerShape(16.dp)
 
 private val EventModes = listOf(
     Event.Mode.InPerson to Res.string.event_mode_in_person,
