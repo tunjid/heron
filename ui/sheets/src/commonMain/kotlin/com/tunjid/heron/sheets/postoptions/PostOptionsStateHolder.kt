@@ -4,7 +4,7 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.models.RecordPostReference
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
@@ -118,7 +118,7 @@ private fun Flow<PostOptionsAction.UpdatePostReference>.launchUpdatePostReferenc
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
-    toWritable = { Writable.StandardSite.UpdatePostReference(it.reference) },
+    toWritable = { Writable.UpdatePostReference(it.reference) },
 ) { _, memo ->
     if (memo != null) state.messages += memo
 }
@@ -156,7 +156,7 @@ interface PostOptionsState {
 
 sealed class PostOptionsAction(val key: String) {
     data class UpdatePostReference(
-        val reference: StandardDocument.PostReference,
+        val reference: RecordPostReference,
     ) : PostOptionsAction(key = "UpdatePostReference")
 
     data class SendFeedInteraction(

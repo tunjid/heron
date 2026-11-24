@@ -18,12 +18,15 @@ package com.tunjid.heron.sheets
 
 import androidx.compose.runtime.Composable
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsSheetState
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsStateHolder
+import com.tunjid.heron.sheets.eventeditor.EventEditorSheetState
+import com.tunjid.heron.sheets.eventeditor.EventEditorStateHolder
 import com.tunjid.heron.sheets.inference.InferenceSheetState
 import com.tunjid.heron.sheets.inference.InferenceStateHolder
 import com.tunjid.heron.sheets.mutedwords.MutedWordsSheetState
@@ -131,6 +134,15 @@ fun PaneScaffoldState.rememberPostInteractionsSheetState(
     )
     return sheetState
 }
+
+@Composable
+fun PaneScaffoldState.rememberEventEditorSheetState(
+    onEventSaved: (Event.Put) -> Unit,
+): EventEditorSheetState =
+    EventEditorSheetState.rememberUpdatedEventEditorSheetState(
+        stateHolder = retainSheetStateHolder<EventEditorStateHolder>(),
+        onEventSaved = onEventSaved,
+    )
 
 @Composable
 fun PaneScaffoldState.rememberInferenceSheetState(): InferenceSheetState =

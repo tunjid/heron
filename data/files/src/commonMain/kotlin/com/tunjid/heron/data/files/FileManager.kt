@@ -29,6 +29,7 @@ interface FileManager {
 
     suspend fun cacheWithoutRestrictions(
         restrictedFile: RestrictedFile,
+        maxSizeInBytes: Long,
     ): File.Media?
 
     suspend fun withDimensionsOrSelf(

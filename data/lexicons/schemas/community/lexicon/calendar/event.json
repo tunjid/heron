@@ -71,6 +71,18 @@
                     "rsvpExpected": {
                         "type": "boolean",
                         "description": "Whether a response is requested from attendees."
+                    },
+                    "media": {
+                        "type": "array",
+                        "description": "Media associated with the event, such as a thumbnail image.",
+                        "items": {
+                            "type": "ref",
+                            "ref": "community.lexicon.calendar.event#media"
+                        }
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "description": "The IANA timezone the event is scheduled in."
                     }
                 }
             }
@@ -143,6 +155,56 @@
                 "name": {
                     "type": "string",
                     "description": "The display name of the URI."
+                }
+            }
+        },
+        "media": {
+            "type": "object",
+            "description": "A media item associated with the event.",
+            "required": [
+                "role",
+                "content"
+            ],
+            "properties": {
+                "role": {
+                    "type": "string",
+                    "description": "The role of the media, such as 'thumbnail'.",
+                    "knownValues": [
+                        "thumbnail"
+                    ]
+                },
+                "content": {
+                    "type": "blob",
+                    "accept": [
+                        "image/*"
+                    ],
+                    "maxSize": 1000000
+                },
+                "alt": {
+                    "type": "string",
+                    "description": "Alt text for the media."
+                },
+                "aspect_ratio": {
+                    "type": "ref",
+                    "ref": "community.lexicon.calendar.event#aspectRatio"
+                }
+            }
+        },
+        "aspectRatio": {
+            "type": "object",
+            "description": "Width and height of the media, as a ratio.",
+            "required": [
+                "width",
+                "height"
+            ],
+            "properties": {
+                "width": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "height": {
+                    "type": "integer",
+                    "minimum": 1
                 }
             }
         }

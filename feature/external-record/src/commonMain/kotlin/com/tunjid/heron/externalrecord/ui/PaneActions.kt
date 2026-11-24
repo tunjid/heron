@@ -25,16 +25,22 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.externalrecord.Action
 import com.tunjid.heron.externalrecord.State
+import com.tunjid.heron.externalrecord.editableEvent
 import com.tunjid.heron.sheets.rememberEmbeddableRecordOptionsSheetState
+import com.tunjid.heron.sheets.rememberEventEditorSheetState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.ShareRecordAppBarButton
 import com.tunjid.heron.timeline.utilities.TimelineStrings
+import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Edit
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.record_event
+import heron.ui.timeline.generated.resources.event_edit
 import heron.ui.timeline.generated.resources.share_record
 import org.jetbrains.compose.resources.stringResource
 
@@ -59,6 +65,11 @@ internal fun PaneScaffoldState.PaneActions(
             },
         )
         is Event -> {
+            val eventEditorSheetState = rememberEventEditorSheetState(
+                onEventSaved = { put ->
+                    actions(Action.PutEvent(put = put))
+                },
+            )
             val recordOptionsSheetState = rememberEmbeddableRecordOptionsSheetState(
                 editTitle = null,
                 onEditClicked = {},
@@ -85,6 +96,15 @@ internal fun PaneScaffoldState.PaneActions(
                     )
                 },
             )
+            state.editableEvent?.let { editableEvent ->
+                AppBarIconButton(
+                    icon = HeronIcons.Regular.Edit,
+                    iconDescription = stringResource(TimelineStrings.event_edit),
+                    onClick = {
+                        eventEditorSheetState.editEvent(editableEvent)
+                    },
+                )
+            }
             ShareRecordAppBarButton(
                 contentDescription = stringResource(
                     TimelineStrings.share_record,

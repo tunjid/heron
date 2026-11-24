@@ -40,6 +40,7 @@ import com.tunjid.heron.data.database.entities.StandardPublicationEntity
 import com.tunjid.heron.data.database.entities.StandardRecommendationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
 import com.tunjid.heron.data.utilities.Collections
+import com.tunjid.heron.data.utilities.imageUri
 import com.tunjid.heron.data.utilities.safeDecodeAs
 import com.tunjid.heron.data.utilities.tidInstant
 import kotlin.time.Instant
@@ -248,16 +249,6 @@ internal fun MultipleEntitySaver.add(
             sortedAt = sortedAt,
         ),
     )
-}
-
-private fun Blob?.imageUri(
-    profileId: ProfileId,
-): ImageUri? = when (this) {
-    is Blob.StandardBlob -> ref.link.cid
-    is Blob.LegacyBlob -> cid
-    null -> null
-}?.let { cid ->
-    ImageUri("https://cdn.bsky.app/img/feed_thumbnail/plain/${profileId.id}/$cid@jpeg")
 }
 
 private fun stubPublicationEntity(

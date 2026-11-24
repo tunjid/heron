@@ -21,6 +21,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import sh.christian.ozone.api.model.JsonContent
 
@@ -37,27 +38,16 @@ internal inline fun <reified T : Any> JsonContent.safeDecodeAs(): T? =
         null
     }
 
-/**
- * Returns a new [JsonContent] with the fields produced by [builderAction] merged
- * into the underlying JSON object. Keys produced by [builderAction] override
- * existing keys of the same name.
- *
- * This allows attaching arbitrary fields that are not present on the bundled
- * upstream lexicon definitions (e.g. a custom `via` field on `app.bsky.feed.Post`),
- * since the underlying JSON is trivially editable.
- */
-internal expect fun JsonContent.add(
+internal fun JsonContent.add(
     builderAction: JsonObjectBuilder.() -> Unit,
+): JsonContent = edit {
+    JsonObject(this + buildJsonObject(builderAction))
+}
+
+internal expect fun JsonContent.edit(
+    transform: JsonObject.() -> JsonObject,
 ): JsonContent
 
-/**
- * Reads from the underlying JSON object via [reader] and returns its result.
- *
- * This is the read counterpart to [add]: it allows extracting arbitrary fields that
- * are not present on the bundled upstream lexicon definitions (e.g. a custom `via`
- * field on `app.bsky.feed.Post`) and are therefore dropped by the generated
- * deserializers, since the underlying JSON is trivially readable.
- */
 internal expect fun <T> JsonContent.read(
     reader: JsonObject.() -> T,
 ): T

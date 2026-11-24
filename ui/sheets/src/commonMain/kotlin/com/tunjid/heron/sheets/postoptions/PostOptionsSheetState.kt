@@ -13,11 +13,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.RecordPostReference
 import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.types.PostReferencingRecordUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.sheets.utilities.BottomSheetItemCard
 import com.tunjid.heron.sheets.utilities.BottomSheetItemCardRow
 import com.tunjid.heron.sheets.utilities.CopyToClipboardCard
@@ -52,8 +57,11 @@ import heron.ui.core.generated.resources.viewer_state_block_account
 import heron.ui.core.generated.resources.viewer_state_mute_account
 import heron.ui.core.generated.resources.yes
 import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.attach_post_to_event
+import heron.ui.timeline.generated.resources.attach_post_to_event_overwrite_prompt
 import heron.ui.timeline.generated.resources.delete_post
 import heron.ui.timeline.generated.resources.delete_post_prompt
+import heron.ui.timeline.generated.resources.detach_post_from_event
 import heron.ui.timeline.generated.resources.feed_interaction_show_less
 import heron.ui.timeline.generated.resources.feed_interaction_show_more
 import heron.ui.timeline.generated.resources.link_document_to_post
@@ -298,24 +306,23 @@ private fun PostManagementMenuSection(
             )
             ItemHorizontalDivider()
 
-            // Only the owner of both the post and its embedded standard document can change
-            // the document's bskyPostRef. Show "unlink" when it already points here, otherwise
-            // "link" (with a confirm when it currently points at a different post).
-            val ownDocument = post.embeddedRecords
-                .filterIsInstance<StandardDocument>()
-                .firstOrNull()
-                ?.takeIf { it.authorId == signedInProfileId }
-            if (ownDocument != null) {
+            // Only the owner of both the post and a record it embeds can attach the post to
+            // that record. Show "detach" when the record already points here, otherwise
+            // "attach" (with a confirm when it currently points at a different post).
+            val ownRecord = post.embeddedRecords.firstNotNullOfOrNull { record ->
+                record.asOwnPostReferencingRecordOrNull(signedInProfileId)
+            }
+            if (ownRecord != null) {
                 val overwriteDialogState = rememberSimpleDialogState()
-                val isLinkedPost = ownDocument.bskyPostRef?.uri == post.uri
+                val isLinkedPost = ownRecord.linkedPostUri == post.uri
                 val dispatch = {
                     state.stateHolder.accept(
                         PostOptionsAction.UpdatePostReference(
-                            if (isLinkedPost) StandardDocument.PostReference.Unlink(
-                                documentUri = ownDocument.uri,
+                            if (isLinkedPost) RecordPostReference.Unlink(
+                                recordUri = ownRecord.uri,
                             )
-                            else StandardDocument.PostReference.Link(
-                                documentUri = ownDocument.uri,
+                            else RecordPostReference.Link(
+                                recordUri = ownRecord.uri,
                                 postUri = post.uri,
                                 postCid = post.cid,
                             ),
@@ -331,12 +338,12 @@ private fun PostManagementMenuSection(
                     if (isLinkedPost) HeronIcons.Regular.LinkOff
                     else HeronIcons.Regular.Link,
                     text = stringResource(
-                        if (isLinkedPost) Res.string.unlink_document_from_post
-                        else Res.string.link_document_to_post,
+                        if (isLinkedPost) ownRecord.detachText
+                        else ownRecord.attachText,
                     ),
                     onClick = {
                         when {
-                            !isLinkedPost && ownDocument.bskyPostRef != null -> overwriteDialogState.show()
+                            !isLinkedPost && ownRecord.linkedPostUri != null -> overwriteDialogState.show()
                             else -> dispatch()
                         }
                     },
@@ -346,12 +353,12 @@ private fun PostManagementMenuSection(
                     state = overwriteDialogState,
                     title = {
                         SimpleDialogTitle(
-                            text = stringResource(Res.string.link_document_to_post),
+                            text = stringResource(ownRecord.attachText),
                         )
                     },
                     text = {
                         SimpleDialogText(
-                            text = stringResource(Res.string.link_document_to_post_overwrite_prompt),
+                            text = stringResource(ownRecord.overwritePrompt),
                         )
                     },
                     confirmButton = {
@@ -469,4 +476,39 @@ enum class PostModerationTools(
         stringRes = CommonStrings.viewer_state_mute_account,
         icon = HeronIcons.AutoMirrored.VolumeOff,
     ),
+}
+
+/**
+ * A record the signed-in user owns that a post can be attached to.
+ */
+private class OwnPostReferencingRecord(
+    val uri: PostReferencingRecordUri,
+    val linkedPostUri: RecordUri?,
+    val attachText: StringResource,
+    val detachText: StringResource,
+    val overwritePrompt: StringResource,
+)
+
+private fun Record.Embeddable.asOwnPostReferencingRecordOrNull(
+    signedInProfileId: ProfileId?,
+): OwnPostReferencingRecord? = when (this) {
+    is StandardDocument -> takeIf { it.authorId == signedInProfileId }?.let { document ->
+        OwnPostReferencingRecord(
+            uri = document.uri,
+            linkedPostUri = document.bskyPostRef?.uri,
+            attachText = Res.string.link_document_to_post,
+            detachText = Res.string.unlink_document_from_post,
+            overwritePrompt = Res.string.link_document_to_post_overwrite_prompt,
+        )
+    }
+    is Event -> takeIf { it.author.did == signedInProfileId }?.let { event ->
+        OwnPostReferencingRecord(
+            uri = event.uri,
+            linkedPostUri = event.bskyPostRef?.uri,
+            attachText = Res.string.attach_post_to_event,
+            detachText = Res.string.detach_post_from_event,
+            overwritePrompt = Res.string.attach_post_to_event_overwrite_prompt,
+        )
+    }
+    else -> null
 }

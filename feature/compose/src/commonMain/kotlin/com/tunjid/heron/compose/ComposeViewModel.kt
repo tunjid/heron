@@ -204,6 +204,9 @@ class ActualComposeViewModel(
                         is Action.SelectGif -> action.flow.launchSelectGifMutations(
                             state = state,
                         )
+                        is Action.AttachEvent -> action.flow.launchAttachEventMutations(
+                            state = state,
+                        )
                         is Action.Navigate -> action.flow.collect { navAction ->
                             navActions(navAction.navigationMutation)
                         }
@@ -320,6 +323,18 @@ private fun Flow<Action.SelectGif>.launchSelectGifMutations(
 }
 
 context(productionScope: CoroutineScope)
+private fun Flow<Action.AttachEvent>.launchAttachEventMutations(
+    state: State.Mutable,
+) = launchedCollect { action ->
+    val author = state.signedInProfile ?: return@launchedCollect
+    state.event = action.event
+    state.linkPreview = action.event.asLinkPreview(
+        author = author,
+        now = Clock.System.now(),
+    )
+}
+
+context(productionScope: CoroutineScope)
 private fun Flow<Action.PostTextChanged>.launchPostTextMutations(
     state: State.Mutable,
 ) = launchedCollect { action ->
@@ -354,7 +369,10 @@ private fun Flow<Action.RemoveDetectedUri>.launchRemoveDetectedUriMutations(
 ) = launchedCollect { action ->
     when (action.uri) {
         state.embeddedRecord?.embeddableRecordUri -> state.embeddedRecord = null
-        state.linkPreview?.embed?.uri -> state.linkPreview = null
+        state.linkPreview?.embed?.uri -> {
+            state.linkPreview = null
+            state.event = null
+        }
         else -> Unit
     }
     state.dismissedUri = action.uri
@@ -436,6 +454,7 @@ private fun Flow<Action.CreatePost>.launchCreatePostMutations(
                 embeddedRecordReference = action.embeddedRecordReference,
                 linkPreview = action.linkPreview,
                 allowed = action.interactionPreference?.threadGateAllowed,
+                event = action.event,
                 fileManager = fileManager,
             ),
             sourceDraftId = action.sourceDraftId,
@@ -487,6 +506,8 @@ private fun Flow<Action.SaveDraft>.launchSaveDraftMutations(
                         embeddedRecordReference = state.embeddedRecord?.reference,
                         linkPreview = state.linkPreview,
                         allowed = state.interactionsPreference?.threadGateAllowed,
+                        // Drafts only restore their text, so an attached event is not kept.
+                        event = null,
                         fileManager = fileManager,
                     ),
                 ),
@@ -523,6 +544,7 @@ private fun Flow<Action.LoadDraft>.launchLoadDraftMutations(
     state.video = null
     state.embeddedRecord = null
     state.linkPreview = null
+    state.event = null
     state.postText = TextFieldValue(
         annotatedString = AnnotatedString(text),
         selection = TextRange(text.length),
@@ -542,6 +564,7 @@ private suspend fun composeRequest(
     embeddedRecordReference: Record.Reference?,
     linkPreview: LinkPreview?,
     allowed: ThreadGate.Allowed?,
+    event: Event.Put?,
     fileManager: FileManager,
 ): Post.Create.Request = Post.Create.Request(
     authorId = authorId,
@@ -551,11 +574,15 @@ private suspend fun composeRequest(
         reply = reply,
         embeddedRecordReference = embeddedRecordReference,
         embeddedMedia = media.mapNotNull { item ->
-            fileManager.cacheWithoutRestrictions(item)
+            fileManager.cacheWithoutRestrictions(
+                restrictedFile = item,
+                maxSizeInBytes = MAX_POST_IMAGE_SIZE_IN_BYTES,
+            )
         },
         allowed = allowed,
         linkPreview = linkPreview,
         langs = langs,
+        event = event,
     ),
 )
 
@@ -589,3 +616,6 @@ private fun Flow<Action.ClearSuggestions>.launchClearSuggestionsMutations(
 
 private val SEARCH_DEBOUNCE = 300.milliseconds
 const val MAX_SUGGESTED_PROFILES = 5
+
+// The blob limit for an image in app.bsky.embed.images.
+private const val MAX_POST_IMAGE_SIZE_IN_BYTES = 2_000_000L

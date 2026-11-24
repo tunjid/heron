@@ -43,6 +43,8 @@ import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.File
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
@@ -76,6 +78,16 @@ internal fun File.Media.with(blob: Blob) = when (this) {
         file = this,
         blob = blob,
     )
+}
+
+internal fun Blob?.imageUri(
+    profileId: ProfileId,
+): ImageUri? = when (this) {
+    is Blob.StandardBlob -> ref.link.cid
+    is Blob.LegacyBlob -> cid
+    null -> null
+}?.let { cid ->
+    ImageUri("https://cdn.bsky.app/img/feed_thumbnail/plain/${profileId.id}/$cid@jpeg")
 }
 
 internal fun postEmbedUnion(

@@ -331,9 +331,17 @@ private fun Flow<Action.ToggleFeed>.launchToggleFeedMutations(
 
 private suspend fun FileManager.toUnrestrictedPhotoFile(
     file: RestrictedFile.Media.Photo,
-): File.Media.Photo? = when (val unrestrictedFile = cacheWithoutRestrictions(file)) {
+): File.Media.Photo? = when (
+    val unrestrictedFile = cacheWithoutRestrictions(
+        restrictedFile = file,
+        maxSizeInBytes = MAX_PROFILE_IMAGE_SIZE_IN_BYTES,
+    )
+) {
     is File.Media.Photo -> unrestrictedFile
     is File.Media.Video,
     null,
     -> null
 }
+
+// The blob limit for an avatar or banner in app.bsky.actor.profile.
+private const val MAX_PROFILE_IMAGE_SIZE_IN_BYTES = 1_000_000L

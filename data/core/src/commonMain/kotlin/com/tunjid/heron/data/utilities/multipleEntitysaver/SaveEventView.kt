@@ -32,10 +32,12 @@ import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.database.entities.EventEntity
 import com.tunjid.heron.data.database.entities.RsvpEntity
 import com.tunjid.heron.data.network.models.stubProfileEntity
+import com.tunjid.heron.data.utilities.imageUri
 import com.tunjid.heron.data.utilities.safeDecodeAs
 import com.tunjid.heron.data.utilities.tidInstant
 import community.lexicon.calendar.Event as LexiconEvent
 import community.lexicon.calendar.EventLocationUnion
+import community.lexicon.calendar.EventMediaRole
 import community.lexicon.calendar.EventUri as LexiconEventUri
 import community.lexicon.calendar.Rsvp as LexiconRsvp
 import kotlin.time.Instant
@@ -62,14 +64,7 @@ internal fun MultipleEntitySaver.add(
             endsAt = event.endsAt,
             mode = event.mode?.value,
             status = event.status?.value,
-            base64EncodedPlaces = Event.Places(
-                locations = event.locations
-                    ?.mapNotNull(EventLocationUnion::asLocation)
-                    .orEmpty(),
-                links = event.uris
-                    ?.map(LexiconEventUri::asExternalLink)
-                    .orEmpty(),
-            ).toUrlEncodedBase64(),
+            base64EncodedPlaces = event.places().toUrlEncodedBase64(),
             rsvpExpected = event.rsvpExpected,
             sortedAt = eventView.sortedAt,
             goingCount = eventView.goingCount,
@@ -145,6 +140,45 @@ internal fun MultipleEntitySaver.add(
     )
 }
 
+/**
+ * Saves an event the signed-in user just created, before the AppView has indexed it.
+ */
+internal fun MultipleEntitySaver.add(
+    eventUri: EventUri,
+    eventCid: EventId,
+    event: LexiconEvent,
+) {
+    val profileId = eventUri.profileId()
+    val thumbnail = event.media?.firstOrNull { it.role == EventMediaRole.Thumbnail }
+    add(stubProfileEntity(profileId = profileId))
+    add(
+        EventEntity(
+            uri = eventUri,
+            cid = eventCid,
+            authorId = profileId,
+            name = event.name,
+            description = event.description,
+            createdAt = event.createdAt,
+            startsAt = event.startsAt,
+            endsAt = event.endsAt,
+            mode = event.mode?.value,
+            status = event.status?.value,
+            base64EncodedPlaces = event.places().toUrlEncodedBase64(),
+            rsvpExpected = event.rsvpExpected,
+            sortedAt = event.createdAt,
+            goingCount = 0,
+            interestedCount = 0,
+            notGoingCount = 0,
+            thumbnail = thumbnail?.content.imageUri(profileId = profileId),
+            thumbnailWidth = thumbnail?.aspect_ratio?.width,
+            thumbnailHeight = thumbnail?.aspect_ratio?.height,
+            bskyPostUri = null,
+            bskyPostCid = null,
+            bskyPostShowComments = null,
+        ),
+    )
+}
+
 internal fun stubEventEntity(
     eventUri: EventUri,
     name: String,
@@ -176,6 +210,15 @@ internal fun stubEventEntity(
         bskyPostShowComments = null,
     )
 }
+
+private fun LexiconEvent.places() = Event.Places(
+    locations = locations
+        ?.mapNotNull(EventLocationUnion::asLocation)
+        .orEmpty(),
+    links = uris
+        ?.map(LexiconEventUri::asExternalLink)
+        .orEmpty(),
+)
 
 private fun EventLocationUnion.asLocation(): Event.Location? = when (this) {
     is EventLocationUnion.CalendarEventUri -> Event.Location.Online(

@@ -435,6 +435,10 @@ private fun Writable.writeTimeout() =
                         is File.Media.Video -> VideoWriteTimeout
                     }
                 }
+                .plus(if (request.metadata.event?.thumbnail != null) ImageWriteTimeout else 0.seconds)
+        is Writable.EventPut ->
+            BasicWriteTimeout
+                .plus(if (put.thumbnail != null) ImageWriteTimeout else 0.seconds)
         is Writable.ProfileUpdate ->
             BasicWriteTimeout
                 .plus(if (update.avatarFile != null) ImageWriteTimeout else 0.seconds)
@@ -449,6 +453,7 @@ private fun Writable.writeTimeout() =
         is Writable.Send,
         is Writable.TimelineUpdate,
         is Writable.RecordDeletion,
+        is Writable.UpdatePostReference,
         is Writable.FeedList,
         is Writable.StandardSite,
         is Writable.RsvpUpdate,

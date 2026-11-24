@@ -17,15 +17,13 @@
 package com.tunjid.heron.data.utilities
 
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonObjectBuilder
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import sh.christian.ozone.api.model.JsonContent
 
-internal actual fun JsonContent.add(
-    builderAction: JsonObjectBuilder.() -> Unit,
+internal actual fun JsonContent.edit(
+    transform: JsonObject.() -> JsonObject,
 ): JsonContent = JsonContent(
-    value = JsonObject(value.jsonObject + buildJsonObject(builderAction)),
+    value = value.jsonObject.transform(),
     format = format,
 )
 

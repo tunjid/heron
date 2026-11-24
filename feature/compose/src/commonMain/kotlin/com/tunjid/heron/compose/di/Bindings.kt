@@ -41,6 +41,8 @@ import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.ComposeScreen
 import com.tunjid.heron.compose.ComposeStateHolder
 import com.tunjid.heron.compose.ComposeViewModelInitializer
+import com.tunjid.heron.compose.canAddEvent
+import com.tunjid.heron.compose.canAddMedia
 import com.tunjid.heron.compose.canDraft
 import com.tunjid.heron.compose.drafts.DraftsStateHolder
 import com.tunjid.heron.compose.drafts.DraftsViewModelInitializer
@@ -51,6 +53,7 @@ import com.tunjid.heron.compose.hasComposedContent
 import com.tunjid.heron.compose.ui.ComposePostBottomBar
 import com.tunjid.heron.compose.ui.ComposePostFabRow
 import com.tunjid.heron.compose.ui.PaneActions
+import com.tunjid.heron.sheets.rememberEventEditorSheetState
 import com.tunjid.heron.ui.DestructiveDialogButton
 import com.tunjid.heron.ui.NeutralDialogButton
 import com.tunjid.heron.ui.PrimaryDialogButton
@@ -88,7 +91,6 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.discard
-import heron.feature.compose.generated.resources.drafts
 import heron.feature.compose.generated.resources.keep_editing
 import heron.feature.compose.generated.resources.save_draft
 import heron.feature.compose.generated.resources.save_draft_dialog_text
@@ -180,6 +182,10 @@ internal fun Route(
         stateHolder.accept(Action.SelectGif(gif))
     }
 
+    val eventEditorSheetState = paneScaffoldState.rememberEventEditorSheetState { event ->
+        stateHolder.accept(Action.AttachEvent(event))
+    }
+
     // Only interrupt leaving when there is unsaved content on a post that could become a draft.
     // Replies and quotes can't be drafted, so they pop immediately.
     val shouldOfferDraft = state.canDraft && state.hasComposedContent
@@ -245,9 +251,12 @@ internal fun Route(
                     .windowInsetsPadding(WindowInsets.platformNavigationBars),
                 postText = state.postText,
                 photos = state.photos,
-                canAddGif = state.photos.isEmpty() && state.video == null,
+                canAddMedia = state.canAddMedia,
+                canAddGif = state.photos.isEmpty() && state.video == null && state.canAddMedia,
+                canAddEvent = state.canAddEvent,
                 onMediaEdited = stateHolder.accept,
                 onGifClicked = gifPickerSheetState::showGifPicker,
+                onEventClicked = eventEditorSheetState::createEvent,
             )
 
             DisposableEffect(hasBlankText, imeShowing) {
