@@ -68,6 +68,7 @@ internal class OkioFileKitFileManager(
 
     override suspend fun cacheWithoutRestrictions(
         restrictedFile: RestrictedFile,
+        maxSizeInBytes: Long,
     ): File.Media? {
         var cachedFile: PlatformFile? = null
 
@@ -79,7 +80,9 @@ internal class OkioFileKitFileManager(
             // Only photos are compressed; videos are cached verbatim. Oversized photos
             // are re-encoded as JPEG so uploads stay within the server's blob size limit.
             val compressedBytes = when (restrictedFile) {
-                is RestrictedFile.Media.Photo -> restrictedFile.compressedImageBytesOrNull()
+                is RestrictedFile.Media.Photo -> restrictedFile.compressedImageBytesOrNull(
+                    maxSizeInBytes = maxSizeInBytes,
+                )
                 is RestrictedFile.Media.Video -> null
             }
 
@@ -227,7 +230,7 @@ private val File.Media.hasDimensions: Boolean
     }
 
 /**
- * Returns JPEG bytes for an oversized photo shrunk to fit within [MAX_IMAGE_SIZE], or null
+ * Returns JPEG bytes for an oversized photo shrunk to fit within [maxSizeInBytes], or null
  * when compression is unnecessary: the photo is already within the limit, or a compressed
  * pass would not actually be smaller than the original.
  *
@@ -235,9 +238,11 @@ private val File.Media.hasDimensions: Boolean
  * result is still too large, JPEG quality is stepped down until it fits or the quality
  * floor ([MIN_IMAGE_QUALITY]) is reached.
  */
-private suspend fun RestrictedFile.Media.Photo.compressedImageBytesOrNull(): ByteArray? {
+private suspend fun RestrictedFile.Media.Photo.compressedImageBytesOrNull(
+    maxSizeInBytes: Long,
+): ByteArray? {
     val originalSize = file.size()
-    if (originalSize <= MAX_IMAGE_SIZE) return null
+    if (originalSize <= maxSizeInBytes) return null
 
     val originalBytes = file.readBytes()
 
@@ -253,7 +258,7 @@ private suspend fun RestrictedFile.Media.Photo.compressedImageBytesOrNull(): Byt
 
     var quality = MAX_IMAGE_QUALITY
     var compressed = compressAtQuality(quality)
-    while (compressed.size > MAX_IMAGE_SIZE && quality > MIN_IMAGE_QUALITY) {
+    while (compressed.size > maxSizeInBytes && quality > MIN_IMAGE_QUALITY) {
         quality = maxOf(MIN_IMAGE_QUALITY, quality - IMAGE_QUALITY_STEP)
         compressed = compressAtQuality(quality)
     }
@@ -299,9 +304,6 @@ internal expect fun initializeFileKit()
 
 private val UnrestrictedCachedFilesDir = FileKit.cacheDir / "unrestricted-files"
 
-/** Photos larger than this (2 MB) are re-encoded before caching. */
-private const val MAX_IMAGE_SIZE: Long = 2L * 1024 * 1024
-
 /** Longest-edge cap applied before quality reduction; also Bluesky's display ceiling. */
 private const val MAX_IMAGE_EDGE: Int = 2048
 
@@ -311,7 +313,7 @@ private const val MAX_IMAGE_QUALITY: Int = 85
 /** Quality floor; below this the re-encode is written even if still over the limit. */
 private const val MIN_IMAGE_QUALITY: Int = 40
 
-/** Amount quality drops per pass when a result is still over [MAX_IMAGE_SIZE]. */
+/** Amount quality drops per pass when a result is still over the size limit. */
 private const val IMAGE_QUALITY_STEP: Int = 10
 
 private const val COMPRESSED_IMAGE_EXTENSION: String = "jpg"

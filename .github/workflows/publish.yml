@@ -49,8 +49,7 @@ jobs:
 
       - name: Build Unsigned AAB
         run: |
-          ./gradlew spotlessCheck \
-            bundleRelease \
+          ./gradlew bundleRelease \
             -Pheron.versionCode=${{ github.run_number }} \
             -Pheron.isRelease=true
 

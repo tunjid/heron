@@ -50,7 +50,8 @@ import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.ui.sharedElementPrefix
+import com.tunjid.heron.timeline.ui.withEmbeddingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
@@ -172,12 +173,14 @@ internal fun PostSearchResults(
                 is PostAction.OfProfile -> onPostSearchResultProfileClicked(
                     action.profile,
                     action.post,
-                    sharedElementPrefix.withQuotingPostUriPrefix(action.quotingPostUri),
+                    sharedElementPrefix.withEmbeddingPostUriPrefix(action.quotingPostUri),
                 )
 
                 is PostAction.OfRecord -> onPostRecordClicked(
                     action.record,
-                    sharedElementPrefix.withQuotingPostUriPrefix(action.owningPostUri),
+                    action.sharedElementPrefix(
+                        prefix = sharedElementPrefix,
+                    ),
                 )
 
                 is PostAction.RecordInteraction -> onRecordInteraction(action)
@@ -186,7 +189,7 @@ internal fun PostSearchResults(
                     action.media,
                     action.index,
                     action.post,
-                    sharedElementPrefix.withQuotingPostUriPrefix(action.quotingPostUri),
+                    sharedElementPrefix.withEmbeddingPostUriPrefix(action.quotingPostUri),
                 )
 
                 is PostAction.OfReply -> onReplyToPost(action.post, sharedElementPrefix)

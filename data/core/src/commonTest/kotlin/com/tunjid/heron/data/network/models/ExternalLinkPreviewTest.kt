@@ -53,6 +53,34 @@ class ExternalLinkPreviewTest {
         assertNotNull(document.cid)
         val publication = assertNotNull(document.publication)
         assertEquals("Adetunji Dahunsi", publication.name)
+        assertEquals(0, document.recommendationCount)
+        assertNull(document.recommendation)
+        assertNull(publication.subscription)
+    }
+
+    @Test
+    fun hydratedArticleData_carriesRecommendationsAndViewerState() {
+        val response = BlueskyJson.decodeFromString<CardyExtractResponse>(StandardSiteWithArticleDataJson)
+        val preview = assertNotNull(
+            response.asLinkPreview(GenericUri("https://tunjid.com/articles/example")),
+        )
+
+        val document = assertNotNull(preview.primaryRecord as? StandardDocument)
+        assertEquals(7, document.recommendationCount)
+        val recommendation = assertNotNull(document.recommendation)
+        assertEquals(
+            "at://did:plc:viewer/site.standard.graph.recommend/3mlwarqwqe2aq",
+            recommendation.uri.uri,
+        )
+        assertEquals(document.uri, recommendation.documentUri)
+
+        val publication = assertNotNull(document.publication)
+        val subscription = assertNotNull(publication.subscription)
+        assertEquals(
+            "at://did:plc:viewer/site.standard.graph.subscription/3mlwarqwqe2ar",
+            subscription.uri.uri,
+        )
+        assertEquals(publication.uri, subscription.publicationUri)
     }
 
     @Test
@@ -112,6 +140,69 @@ private const val StandardSiteJson = """
           "cid": "bafyreidfsiixcefy5klglf7xi2rgrjono4io6apclplzdu2vrkcwoomqci"
         }
       ]
+    }
+  }
+}
+"""
+
+private const val StandardSiteWithArticleDataJson = """
+{
+  "error": "",
+  "likely_type": "html",
+  "url": "embracing-compose-snapshot-state",
+  "title": "Embracing Compose Snapshot State for UI Layer State Production",
+  "description": "Use Compose State and not StateFlow to get the best out of the UI layer",
+  "image": "https://cardyb.bsky.app/v1/image?url=legacy",
+  "view": {
+    "external": {
+      "uri": "https://tunjid.com/articles/embracing-compose-snapshot-state",
+      "title": "Embracing Compose Snapshot State for UI Layer State Production",
+      "description": "Getting the best out of Kotlin, coroutines and compose in the UI layer",
+      "thumb": "https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:6q4y7p2wft3tncsffspts3m5/bafthumb",
+      "createdAt": "2026-05-15T21:13:33.000Z",
+      "source": {
+        "uri": "https://tunjid.com",
+        "icon": "https://cdn.bsky.app/img/avatar/plain/did:plc:6q4y7p2wft3tncsffspts3m5/baficon",
+        "title": "Adetunji Dahunsi",
+        "description": "A collection of my thoughts and experiences."
+      },
+      "associatedProfiles": [
+        {
+          "did": "did:plc:6q4y7p2wft3tncsffspts3m5",
+          "handle": "tunji.dev",
+          "displayName": "TJ",
+          "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:6q4y7p2wft3tncsffspts3m5/bafavatar"
+        }
+      ],
+      "associatedRefs": [
+        {
+          "uri": "at://did:plc:6q4y7p2wft3tncsffspts3m5/site.standard.document/3mlwarqwqe2ap",
+          "cid": "bafyreiaojsow3evw7j4mn6ady3q7ji7i2ttgbukz5hzslsswfg2coqauee"
+        },
+        {
+          "uri": "at://did:plc:6q4y7p2wft3tncsffspts3m5/site.standard.publication/3ddckoeex22s5",
+          "cid": "bafyreidfsiixcefy5klglf7xi2rgrjono4io6apclplzdu2vrkcwoomqci"
+        }
+      ]
+    },
+    "data": {
+      "${'$'}type": "app.bsky.embed.external#viewArticle",
+      "uri": "https://tunjid.com/articles/embracing-compose-snapshot-state",
+      "title": "Embracing Compose Snapshot State for UI Layer State Production",
+      "description": "Getting the best out of Kotlin, coroutines and compose in the UI layer",
+      "likeCount": 7,
+      "viewer": {
+        "like": "at://did:plc:viewer/site.standard.graph.recommend/3mlwarqwqe2aq"
+      },
+      "publisher": {
+        "uri": "https://tunjid.com",
+        "title": "Adetunji Dahunsi",
+        "description": "A collection of my thoughts and experiences.",
+        "subscriptionCount": 12,
+        "viewer": {
+          "subscription": "at://did:plc:viewer/site.standard.graph.subscription/3mlwarqwqe2ar"
+        }
+      }
     }
   }
 }

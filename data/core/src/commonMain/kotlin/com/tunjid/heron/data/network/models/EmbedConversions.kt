@@ -2,6 +2,9 @@ package com.tunjid.heron.data.network.models
 
 import app.bsky.embed.ExternalColorRGB
 import app.bsky.embed.ExternalView
+import app.bsky.embed.ExternalViewArticle
+import app.bsky.embed.ExternalViewArticlePublication
+import app.bsky.embed.ExternalViewDataUnion
 import app.bsky.embed.ExternalViewExternal
 import app.bsky.embed.ExternalViewExternalSource
 import app.bsky.embed.ExternalViewExternalSourceTheme
@@ -16,6 +19,8 @@ import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StandardRecommendation
+import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
@@ -25,6 +30,8 @@ import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardRecommendationUri
+import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
@@ -40,18 +47,33 @@ import com.tunjid.heron.data.utilities.tidInstant
 import kotlin.time.Instant
 
 /**
- * The hydrated `app.bsky.embed.external#viewExternal` of this post's embed, if any — used to
- * surface `associatedRefs` / `viewExternalSource` for standard-site record stubbing.
+ * The hydrated `app.bsky.embed.external#view` of this post's embed, if any — used to surface
+ * `associatedRefs` / `viewExternalSource` and the article [ExternalView.data] for standard-site
+ * record stubbing.
  */
-internal fun PostView.externalAssociatedView(): ExternalViewExternal? =
+internal fun PostView.externalAssociatedView(): ExternalView? =
     when (val embed = embed) {
-        is PostViewEmbedUnion.ExternalView -> embed.value.external
+        is PostViewEmbedUnion.ExternalView -> embed.value
         is PostViewEmbedUnion.RecordWithMediaView -> when (val media = embed.value.media) {
-            is RecordWithMediaViewMediaUnion.ExternalView -> media.value.external
+            is RecordWithMediaViewMediaUnion.ExternalView -> media.value
             else -> null
         }
         else -> null
     }
+
+/**
+ * The hydrated `app.bsky.embed.external#viewArticle`, when the appview resolved one for this embed.
+ */
+internal val ExternalView.article: ExternalViewArticle?
+    get() = (data as? ExternalViewDataUnion.ViewArticle)?.value
+
+/**
+ * The hydrated `app.bsky.embed.external#viewArticlePublication`, either as the publisher of
+ * [article] or as the embed's own data when it links to the publication itself.
+ */
+internal val ExternalView.articlePublication: ExternalViewArticlePublication?
+    get() = article?.publisher
+        ?: (data as? ExternalViewDataUnion.ViewArticlePublication)?.value
 
 internal fun ExternalViewExternal.asExternalEmbedEntity() = ExternalEmbedEntity(
     uri = GenericUri(uri.uri),
@@ -118,7 +140,7 @@ internal fun CardyExtractResponse.asLinkPreview(
     requestedUrl: GenericUri,
 ): LinkPreview? {
     if (!error.isNullOrBlank()) return null
-    view?.external?.let { return it.asLinkPreview() }
+    view?.let { return it.asLinkPreview() }
 
     val resolvedTitle = title.orEmpty()
     val thumb = image?.takeIf(String::isNotBlank)?.let(::ImageUri)
@@ -173,16 +195,20 @@ internal fun ExternalViewExternal.associatedStandardRefs(): ExternalStandardRefs
 }
 
 /**
- * Maps a hydrated `app.bsky.embed.external#viewExternal` to a [LinkPreview], stubbing the
+ * Maps a hydrated `app.bsky.embed.external#view` to a [LinkPreview], stubbing the
  * `site.standard.*` records referenced by [ExternalViewExternal.associatedRefs] directly into domain
  * models (no DB round-trip — this is a transient pre-publish preview). Mirrors the entity derivations
- * in `MultipleEntitySaver.addExternalAssociatedRecords`.
+ * in `MultipleEntitySaver.addBlueskyIndexedExternalAssociatedRecords`.
+ *
+ * When the appview also hydrates [ExternalView.data] as an article or publication, its
+ * recommendation count and viewer state (the viewer's recommendation / subscription) are carried
+ * onto the stubbed records.
  */
-internal fun ExternalViewExternal.asLinkPreview(): LinkPreview {
-    val embed = asExternalEmbedEntity().asExternalModel()
-    val refs = associatedStandardRefs() ?: return LinkPreview(embed = embed)
+internal fun ExternalView.asLinkPreview(): LinkPreview {
+    val embed = external.asExternalEmbedEntity().asExternalModel()
+    val refs = external.associatedStandardRefs() ?: return LinkPreview(embed = embed)
 
-    val associatedProfilesByDid = associatedProfiles
+    val associatedProfilesByDid = external.associatedProfiles
         .orEmpty()
         .associateBy { it.did.did }
 
@@ -190,12 +216,20 @@ internal fun ExternalViewExternal.asLinkPreview(): LinkPreview {
         standardPublication(
             uri = pubUri,
             cid = refs.publicationCid,
-            source = source,
+            source = external.source,
             publisher = associatedProfilesByDid[pubUri.profileId().id]?.profile()
                 ?: stubProfile(
                     did = pubUri.profileId(),
                     handle = ProfileHandle(pubUri.profileId().id),
                 ),
+            subscription = articlePublication?.viewer?.subscription?.let { subscriptionUri ->
+                StandardSubscription(
+                    uri = StandardSubscriptionUri(subscriptionUri.atUri),
+                    cid = null,
+                    publicationUri = pubUri,
+                    sortedAt = subscriptionUri.tidInstant ?: Instant.DISTANT_PAST,
+                )
+            },
         )
     }
 
@@ -203,8 +237,17 @@ internal fun ExternalViewExternal.asLinkPreview(): LinkPreview {
         standardDocument(
             uri = docUri,
             cid = refs.documentCid,
-            view = this,
+            view = external,
             publication = publication,
+            recommendationCount = article?.likeCount ?: 0,
+            recommendation = article?.viewer?.like?.let { recommendationUri ->
+                StandardRecommendation(
+                    uri = StandardRecommendationUri(recommendationUri.atUri),
+                    cid = null,
+                    documentUri = docUri,
+                    sortedAt = recommendationUri.tidInstant ?: Instant.DISTANT_PAST,
+                )
+            },
         )
     }
 
@@ -219,6 +262,7 @@ private fun standardPublication(
     cid: StandardPublicationId?,
     source: ExternalViewExternalSource?,
     publisher: Profile,
+    subscription: StandardSubscription?,
 ) = StandardPublication(
     uri = uri,
     cid = cid,
@@ -229,7 +273,7 @@ private fun standardPublication(
     icon = source?.icon?.uri?.let(::ImageUri),
     showInDiscover = true,
     basicTheme = source?.theme?.asBasicTheme(),
-    subscription = null,
+    subscription = subscription,
 )
 
 private fun standardDocument(
@@ -237,6 +281,8 @@ private fun standardDocument(
     cid: StandardDocumentId?,
     view: ExternalViewExternal,
     publication: StandardPublication?,
+    recommendationCount: Long,
+    recommendation: StandardRecommendation?,
 ) = StandardDocument(
     uri = uri,
     cid = cid,
@@ -252,8 +298,8 @@ private fun standardDocument(
     bskyPostRef = null,
     tags = emptyList(),
     publication = publication,
-    recommendationCount = 0,
-    recommendation = null,
+    recommendationCount = recommendationCount,
+    recommendation = recommendation,
 )
 
 private fun ExternalViewExternalSourceTheme.asBasicTheme(): StandardPublication.BasicTheme? =

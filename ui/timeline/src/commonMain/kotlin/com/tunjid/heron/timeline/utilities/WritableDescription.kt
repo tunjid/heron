@@ -6,6 +6,7 @@ import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.RecordPostReference
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -45,11 +46,13 @@ import com.tunjid.heron.ui.text.message
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.writable_description_accepting_conversation
 import heron.ui.timeline.generated.resources.writable_description_adding_to_list
+import heron.ui.timeline.generated.resources.writable_description_attaching_post
 import heron.ui.timeline.generated.resources.writable_description_blocking_profile
 import heron.ui.timeline.generated.resources.writable_description_bookmarking_post
 import heron.ui.timeline.generated.resources.writable_description_creating_post
 import heron.ui.timeline.generated.resources.writable_description_deleting_draft
 import heron.ui.timeline.generated.resources.writable_description_deleting_record
+import heron.ui.timeline.generated.resources.writable_description_detaching_post
 import heron.ui.timeline.generated.resources.writable_description_following_profile
 import heron.ui.timeline.generated.resources.writable_description_following_starter_pack
 import heron.ui.timeline.generated.resources.writable_description_leaving_conversation
@@ -72,6 +75,7 @@ import heron.ui.timeline.generated.resources.writable_description_removing_repos
 import heron.ui.timeline.generated.resources.writable_description_reposting
 import heron.ui.timeline.generated.resources.writable_description_responding_to_event
 import heron.ui.timeline.generated.resources.writable_description_saving_draft
+import heron.ui.timeline.generated.resources.writable_description_saving_event
 import heron.ui.timeline.generated.resources.writable_description_sending_feed_feedback
 import heron.ui.timeline.generated.resources.writable_description_sending_message
 import heron.ui.timeline.generated.resources.writable_description_subscribing_publication
@@ -210,6 +214,23 @@ fun Writable.describe(): WritableDescription =
                 summary = null,
             )
         }
+        is Writable.UpdatePostReference -> when (reference) {
+            is RecordPostReference.Link -> WritableDescription(
+                icon = HeronIcons.Regular.Link,
+                title = Resource(Res.string.writable_description_attaching_post),
+                summary = null,
+            )
+            is RecordPostReference.Unlink -> WritableDescription(
+                icon = HeronIcons.Regular.LinkOff,
+                title = Resource(Res.string.writable_description_detaching_post),
+                summary = null,
+            )
+        }
+        is Writable.EventPut -> WritableDescription(
+            icon = HeronIcons.Regular.CalendarMonth,
+            title = Resource(Res.string.writable_description_saving_event),
+            summary = null,
+        )
         is Writable.Restriction -> when (restriction) {
             is Profile.Restriction.Block.Add -> WritableDescription(
                 icon = HeronIcons.Regular.Block,

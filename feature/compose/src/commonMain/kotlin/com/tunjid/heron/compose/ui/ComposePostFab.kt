@@ -141,6 +141,7 @@ private fun State.createPostAction(): Action.CreatePost? {
         linkPreview = linkPreview,
         interactionPreference = interactionsPreference,
         sourceDraftId = draftId,
+        event = event,
     )
 }
 

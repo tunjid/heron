@@ -86,7 +86,6 @@ import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
-import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.atmosphereintegration.AtmosphereAppNsids
 import com.tunjid.heron.data.utilities.atmosphereintegration.SupportedAtmosphereApps
@@ -226,7 +225,6 @@ internal class OfflineProfileRepository(
     private val fileManager: FileManager,
     private val savedStateDataSource: SavedStateDataSource,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
-    private val tidGenerator: TidGenerator,
     private val profileLinkWriter: ProfileLinkWriter,
 ) : ProfileRepository {
 
@@ -928,11 +926,11 @@ internal class OfflineProfileRepository(
                 viewer?.blockedBy == true
             if (alreadyHandled) return@mapNotNull null
 
-            val rkey = tidGenerator.generate()
+            val followRecordKey = RecordKey.generate()
             val followUri = recordUriOrNull(
                 signedInProfileId,
                 FollowUri.NAMESPACE,
-                RecordKey(rkey),
+                followRecordKey,
             ) as FollowUri
 
             StarterPackFollowWrite(
@@ -941,7 +939,7 @@ internal class OfflineProfileRepository(
                 followUri = followUri,
                 create = ApplyWritesCreate(
                     collection = Nsid(FollowUri.NAMESPACE),
-                    rkey = RKey(rkey),
+                    rkey = RKey(followRecordKey.value),
                     value = BskyFollow(
                         subject = item.subject.did,
                         createdAt = now,

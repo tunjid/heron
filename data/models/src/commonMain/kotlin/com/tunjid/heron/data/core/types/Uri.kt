@@ -40,6 +40,9 @@ sealed interface RecordUri : Uri
 @Serializable
 sealed interface EmbeddableRecordUri : RecordUri
 
+@Serializable
+sealed interface PostReferencingRecordUri : EmbeddableRecordUri
+
 /**
  * Extracts the [ProfileId] component from an AT URI string.
  */
@@ -274,7 +277,8 @@ value class StandardDocumentUri(
     override val uri: String,
 ) : Uri,
     RecordUri,
-    EmbeddableRecordUri {
+    EmbeddableRecordUri,
+    PostReferencingRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -366,7 +370,8 @@ value class EventUri(
     override val uri: String,
 ) : Uri,
     RecordUri,
-    EmbeddableRecordUri {
+    EmbeddableRecordUri,
+    PostReferencingRecordUri {
     override fun toString(): String = uri
 
     companion object {

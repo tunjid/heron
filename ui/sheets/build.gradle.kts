@@ -36,6 +36,7 @@ kotlin {
                 implementation(project(":ui:core"))
                 implementation(project(":ui:media"))
 
+                implementation(project(":data:files"))
                 implementation(project(":data:ml"))
 
                 implementation(libs.kotlinx.datetime)

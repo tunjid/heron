@@ -18,7 +18,9 @@ package com.tunjid.heron.data.repository
 
 import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.RecordPostReference
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.EventId
 import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
@@ -26,6 +28,7 @@ import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StarterPackUri
@@ -42,13 +45,19 @@ import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.IODispatcher
+import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.records.BlueskyRecordOperations
 import com.tunjid.heron.data.repository.records.EventRecordOperations
 import com.tunjid.heron.data.repository.records.RockskyRecordOperations
 import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
+import com.tunjid.heron.data.repository.records.editRecord
+import com.tunjid.heron.data.repository.records.withBskyPostRef
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
+import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
+import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
@@ -58,6 +67,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
@@ -84,6 +94,10 @@ interface RecordRepository :
     suspend fun deleteRecord(
         uri: RecordUri,
     ): Outcome
+
+    suspend fun updatePostReference(
+        reference: RecordPostReference,
+    ): Outcome
 }
 
 @Inject
@@ -104,6 +118,8 @@ internal class OfflineFirstRecordRepository(
     private val savedStateDataSource: SavedStateDataSource,
     private val recordResolver: RecordResolver,
     private val profileLookup: ProfileLookup,
+    private val networkService: NetworkService,
+    private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
 ) : RecordRepository,
     BlueskyRecordOperations by blueskyRecordOperations,
     EventRecordOperations by eventRecordOperations,
@@ -225,5 +241,70 @@ internal class OfflineFirstRecordRepository(
         ).asFailureOutcome()
 
         recordResolver.deleteRecord(uri)
+    } ?: expiredSessionOutcome()
+
+    override suspend fun updatePostReference(
+        reference: RecordPostReference,
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+        // The record lives in its author's repo, so only its author can rewrite it.
+        val recordOwnerId = reference.recordUri.profileId()
+        if (recordOwnerId != signedInProfileId) return@inCurrentProfileSession UnauthorizedException(
+            signedInProfileId = signedInProfileId,
+            profileId = recordOwnerId,
+        ).asFailureOutcome()
+
+        networkService.editRecord(
+            uri = reference.recordUri,
+            transform = {
+                withBskyPostRef(reference)
+            },
+        ).mapCatchingUnlessCancelled { cid ->
+            // Persist the change locally without relying on the AppView, which lags behind
+            // the PDS write.
+            val linkedPost = reference as? RecordPostReference.Link
+            when (val recordUri = reference.recordUri) {
+                is EventUri -> {
+                    val cachedEntity = eventDao.event(
+                        viewingProfileId = signedInProfileId.id,
+                        uri = recordUri,
+                    )
+                        .first()
+                        ?.entity
+                    if (cachedEntity != null) multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            cachedEntity.copy(
+                                cid = cid.cid.let(::EventId),
+                                bskyPostUri = linkedPost?.postUri,
+                                bskyPostCid = linkedPost?.postCid,
+                                bskyPostShowComments = linkedPost?.let {
+                                    cachedEntity.bskyPostShowComments ?: true
+                                },
+                            ),
+                        )
+                    }
+                }
+                is StandardDocumentUri -> {
+                    val cachedEntity = standardSiteDao.documents(
+                        viewingProfileId = signedInProfileId.id,
+                        uris = setOf(recordUri),
+                    )
+                        .first()
+                        .firstOrNull()
+                        ?.entity
+                    if (cachedEntity != null) multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            cachedEntity.copy(
+                                cid = cid.cid.let(::StandardDocumentId),
+                                bskyPostRefUri = linkedPost?.postUri,
+                                bskyPostRefCid = linkedPost?.postCid,
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+            .toOutcome()
     } ?: expiredSessionOutcome()
 }

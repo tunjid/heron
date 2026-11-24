@@ -83,6 +83,7 @@ import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
+import com.tunjid.heron.timeline.ui.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.description
@@ -634,13 +635,12 @@ private fun ListTimeline(
 
                                     is PostAction.OfRecord -> {
                                         val record = action.record
-                                        val owningPostUri = action.owningPostUri
                                         actions(
                                             Action.Navigate.To(
                                                 recordDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                        quotingPostUri = owningPostUri,
+                                                    sharedElementPrefix = action.sharedElementPrefix(
+                                                        prefix = timelineState.timeline.sharedElementPrefix,
                                                     ),
                                                     record = record,
                                                 ),

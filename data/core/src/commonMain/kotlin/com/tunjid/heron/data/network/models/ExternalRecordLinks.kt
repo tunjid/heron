@@ -47,6 +47,7 @@ internal fun String.externalRecordUriOrNull(): EmbeddableRecordUri? {
 internal fun PostView.externalRecordUris(): List<EmbeddableRecordUri> =
     listOfNotNull(
         externalAssociatedView()
+            ?.external
             ?.uri
             ?.uri
             ?.externalRecordUriOrNull(),

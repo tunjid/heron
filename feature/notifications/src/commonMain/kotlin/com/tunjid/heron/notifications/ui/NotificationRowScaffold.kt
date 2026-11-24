@@ -81,7 +81,7 @@ fun NotificationAggregateScaffold(
     onProfileClicked: (Notification, Profile) -> Unit,
     onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int, Post?) -> Unit = { _, _, _, _ -> },
     onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit = { _, _ -> },
-    onEmbeddedRecordClicked: (Notification.PostAssociated, Record) -> Unit = { _, _ -> },
+    onEmbeddedRecordClicked: (Notification.PostAssociated, Record, Post?) -> Unit = { _, _, _ -> },
     onQuotedProfileClicked: (Notification.PostAssociated, Post, Profile) -> Unit = { _, _, _ -> },
     icon: @Composable () -> Unit,
     content: @Composable () -> Unit,

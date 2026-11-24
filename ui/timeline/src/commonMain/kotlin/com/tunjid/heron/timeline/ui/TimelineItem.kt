@@ -252,9 +252,9 @@ private fun Modifier.timelineCardPresentationPadding(
     Timeline.Presentation.Media.Grid -> this
 }
 
-fun String.withQuotingPostUriPrefix(
-    quotingPostUri: PostUri? = null,
-): String = quotingPostUri
+fun String.withEmbeddingPostUriPrefix(
+    embeddingPostUri: PostUri? = null,
+): String = embeddingPostUri
     ?.let { "$this-$it" }
     ?: this
 

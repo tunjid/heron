@@ -46,11 +46,13 @@ import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.media.picker.MediaType
 import com.tunjid.heron.media.picker.rememberMediaPicker
 import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.CalendarMonth
 import com.tunjid.heron.ui.icons.regular.GifBox
 import com.tunjid.heron.ui.icons.regular.Movie
 import com.tunjid.heron.ui.icons.regular.Photo
 import de.cketti.codepoints.codePointCount
 import heron.feature.compose.generated.resources.Res
+import heron.feature.compose.generated.resources.add_event
 import heron.feature.compose.generated.resources.add_gif
 import kotlin.math.max
 import kotlin.math.min
@@ -61,9 +63,12 @@ internal fun ComposePostBottomBar(
     postText: TextFieldValue,
     modifier: Modifier = Modifier,
     photos: List<RestrictedFile.Media.Photo>,
+    canAddMedia: Boolean,
     canAddGif: Boolean,
+    canAddEvent: Boolean,
     onMediaEdited: (Action.EditMedia) -> Unit,
     onGifClicked: () -> Unit,
+    onEventClicked: () -> Unit,
 ) {
     Row(
         modifier = modifier
@@ -98,6 +103,7 @@ internal fun ComposePostBottomBar(
 
         TabIcons.forEachIndexed { index, imageVector ->
             IconButton(
+                enabled = canAddMedia,
                 onClick = {
                     when (index) {
                         0 -> if (photos.size < PhotoUploadLimit) imagePickerLauncher()
@@ -108,8 +114,9 @@ internal fun ComposePostBottomBar(
                     Icon(
                         modifier = Modifier
                             .graphicsLayer {
-                                alpha = when (index) {
-                                    0 -> if (photos.size < PhotoUploadLimit) 1f else 0.6f
+                                alpha = when {
+                                    !canAddMedia -> 0.6f
+                                    index == 0 -> if (photos.size < PhotoUploadLimit) 1f else 0.6f
                                     else -> 1f
                                 }
                             },
@@ -131,6 +138,21 @@ internal fun ComposePostBottomBar(
                         },
                     imageVector = HeronIcons.Regular.GifBox,
                     contentDescription = stringResource(Res.string.add_gif),
+                    tint = FloatingActionButtonDefaults.containerColor,
+                )
+            },
+        )
+        IconButton(
+            enabled = canAddEvent,
+            onClick = onEventClicked,
+            content = {
+                Icon(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            alpha = if (canAddEvent) 1f else 0.6f
+                        },
+                    imageVector = HeronIcons.Regular.CalendarMonth,
+                    contentDescription = stringResource(Res.string.add_event),
                     tint = FloatingActionButtonDefaults.containerColor,
                 )
             },

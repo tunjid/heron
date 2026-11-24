@@ -45,7 +45,7 @@ fun NotificationEmbed(
     paneTransitionScope: PaneTransitionScope,
     onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int, Post?) -> Unit,
     onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit,
-    onEmbeddedRecordClicked: (Notification.PostAssociated, Record) -> Unit,
+    onEmbeddedRecordClicked: (Notification.PostAssociated, Record, Post?) -> Unit,
     onQuotedProfileClicked: (Notification.PostAssociated, Post, Profile) -> Unit,
 ) {
     val post = postNotification.associatedPost
@@ -83,10 +83,11 @@ fun NotificationEmbed(
                 quote,
             )
         },
-        onEmbeddedRecordClicked = { record ->
+        onEmbeddedRecordClicked = { record, quote ->
             onEmbeddedRecordClicked(
                 postNotification,
                 record,
+                quote,
             )
         },
         onQuotedProfileClicked = { quotedPost, profile ->

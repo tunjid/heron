@@ -50,6 +50,10 @@ dependencyResolutionManagement {
     }
 }
 
+// Included again outside pluginManagement so :ktlint-rules substitutes for its
+// coordinates in Spotless's ktlint rule set resolution.
+includeBuild("build-logic")
+
 include(
     ":androidApp",
     ":composeApp",

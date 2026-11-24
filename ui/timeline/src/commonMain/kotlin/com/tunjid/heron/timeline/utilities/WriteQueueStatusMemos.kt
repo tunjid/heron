@@ -27,6 +27,7 @@ import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.writable_add_list_member
+import heron.ui.timeline.generated.resources.writable_attach_post
 import heron.ui.timeline.generated.resources.writable_block
 import heron.ui.timeline.generated.resources.writable_bookmark
 import heron.ui.timeline.generated.resources.writable_bookmark_removal
@@ -62,6 +63,7 @@ import heron.ui.timeline.generated.resources.writable_unblock
 import heron.ui.timeline.generated.resources.writable_unfollow
 import heron.ui.timeline.generated.resources.writable_unlike
 import heron.ui.timeline.generated.resources.writable_unmute
+import heron.ui.timeline.generated.resources.writable_upsert_event
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
@@ -228,6 +230,14 @@ fun Writable.writeStatusMessage(
             is Writable.StandardSite.UpdatePostReference -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_link_document),
+            )
+            is Writable.UpdatePostReference -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_attach_post),
+            )
+            is Writable.EventPut -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_upsert_event),
             )
             is Writable.StatusUpdate -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),

@@ -26,11 +26,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.PolygonShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
@@ -62,9 +59,9 @@ import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.formatHour
 import com.tunjid.heron.timeline.utilities.formatWeekdayDate
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
+import com.tunjid.heron.ui.Chip
 import com.tunjid.heron.ui.LatchedState
 import com.tunjid.heron.ui.PaneTransitionScope
-import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.CalendarMonth
 import com.tunjid.heron.ui.icons.regular.Cancel
@@ -416,49 +413,17 @@ private fun RsvpRow(
                     modifier = Modifier
                         .animateItem(),
                 ) {
-                    FilterChip(
-                        shape = RsvpChipShape,
-                        border = null,
+                    Chip(
                         selected = isSelected,
+                        text = stringResource(option.label),
                         enabled = enabled,
-                        colors = FilterChipDefaults.filterChipColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            selectedContainerColor = TabsState.TabBackgroundColor,
-                            iconColor = MaterialTheme.colorScheme.outline,
-                            labelColor = MaterialTheme.colorScheme.outline,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            selectedTrailingIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        ),
+                        leadingIcon = option.icon,
+                        trailingIcon =
+                        if (isSelected) HeronIcons.Regular.ExpandMore
+                        else null,
                         onClick = {
                             if (isSelected) expanded = true
                             else onStatusSelected(status)
-                        },
-                        leadingIcon = {
-                            Icon(
-                                modifier = Modifier
-                                    .size(FilterChipDefaults.IconSize),
-                                imageVector = option.icon,
-                                contentDescription = null,
-                            )
-                        },
-                        trailingIcon = if (isSelected) {
-                            {
-                                Icon(
-                                    modifier = Modifier
-                                        .size(FilterChipDefaults.IconSize),
-                                    imageVector = HeronIcons.Regular.ExpandMore,
-                                    contentDescription = null,
-                                )
-                            }
-                        } else {
-                            null
-                        },
-                        label = {
-                            Text(
-                                text = stringResource(option.label),
-                                maxLines = 1,
-                            )
                         },
                     )
                     RsvpMenu(
@@ -589,8 +554,6 @@ private val UnansweredRsvpStatuses = listOf(
     Rsvp.Status.Going,
     Rsvp.Status.Interested,
 )
-
-private val RsvpChipShape = RoundedCornerShape(16.dp)
 
 private val Event.Mode.label: StringResource?
     get() = when (this) {

@@ -90,6 +90,11 @@ data class PostEntity(
             entityColumn = "postUri",
         )
         val associatedRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
+        @Relation(
+            parentColumn = "embeddedRecordUri",
+            entityColumn = "postUri",
+        )
+        val quotedPostAssociatedRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
     )
 
     data class Partial(
@@ -234,6 +239,11 @@ data class ThreadedPostEntity(
         entityColumn = "postUri",
     )
     val associatedRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
+    @Relation(
+        parentColumn = "embeddedRecordUri",
+        entityColumn = "postUri",
+    )
+    val quotedPostAssociatedRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
 )
 
 fun PopulatedPostEntity.asExternalModel(
