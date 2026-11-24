@@ -56,6 +56,8 @@ interface State {
     data class Immutable(
         val sharedElementPrefix: String? = null,
         @Transient
+        val signedInProfileId: ProfileId? = null,
+        @Transient
         val record: Record.Embeddable.External? = null,
         @Transient
         val stateHolders: List<ExternalRecordStateHolders> = emptyList(),
@@ -227,6 +229,10 @@ sealed class Action(val key: String) {
         val profileId: ProfileId,
     ) : Action(key = "MuteAccount")
 
+    data class PutEvent(
+        val put: Event.Put,
+    ) : Action(key = "PutEvent")
+
     data class DeleteRecord(
         val recordUri: RecordUri,
     ) : Action(key = "DeleteRecord")
@@ -250,3 +256,8 @@ sealed class Action(val key: String) {
             NavigationAction by delegate
     }
 }
+
+val State.editableEvent: Event?
+    get() = (record as? Event)?.takeIf { event ->
+        signedInProfileId != null && event.author.did == signedInProfileId
+    }

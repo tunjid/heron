@@ -322,4 +322,14 @@
     <string name="system_message_unlocked">%1$s unlocked the group</string>
     <string name="system_message_locked_permanently">%1$s locked the group permanently</string>
     <string name="system_message_join_link_updated">The join link was updated</string>
+    <string name="event_create">Create an event</string>
+    <string name="event_edit">Edit event</string>
+    <string name="event_name">Name</string>
+    <string name="event_description">Description</string>
+    <string name="event_starts">From</string>
+    <string name="event_ends">Till</string>
+    <string name="event_mode">Type</string>
+    <string name="event_online_link">Link to join online</string>
+    <string name="event_add_thumbnail">Add a thumbnail</string>
+    <string name="event_pick_date">Add date</string>
 </resources>

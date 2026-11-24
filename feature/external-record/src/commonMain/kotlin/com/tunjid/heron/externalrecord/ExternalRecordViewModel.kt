@@ -43,6 +43,7 @@ import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.ui.toWritable
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.timeline.utilities.writeStatusMessage
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
@@ -107,6 +108,9 @@ class ActualExternalRecordViewModel(
                 userDataRepository.preferences.launchedCollect {
                     state.preferences = it
                 }
+                authRepository.signedInUser.launchedCollect {
+                    state.signedInProfileId = it?.did
+                }
                 launchRecordMutations(
                     state = state,
                     route = route,
@@ -135,6 +139,10 @@ class ActualExternalRecordViewModel(
                             writeQueue = writeQueue,
                         )
                         is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.PutEvent -> action.flow.launchPutEventMutations(
                             state = state,
                             writeQueue = writeQueue,
                         )
@@ -234,9 +242,7 @@ private suspend fun launchRecordMutations(
                 if (stateHolders != state.stateHolders) state.stateHolders = stateHolders
             }
         }
-        else -> {
-            Unit
-        }
+        else -> Unit
     }
 }
 
@@ -384,6 +390,16 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
         if (memo != null) state.messages += memo
     },
 )
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.PutEvent>.launchPutEventMutations(
+    state: State.Mutable,
+    writeQueue: WriteQueue,
+) = launchedCollect { action ->
+    val writable = Writable.EventPut(put = action.put)
+    val memo = writable.writeStatusMessage(writeQueue.enqueue(writable))
+    if (memo != null) state.messages += memo
+}
 
 private val EventRsvpStatuses = listOf(
     Rsvp.Status.Going,

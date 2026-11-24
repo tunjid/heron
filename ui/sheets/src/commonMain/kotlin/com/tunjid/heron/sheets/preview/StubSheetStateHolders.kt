@@ -19,6 +19,9 @@ package com.tunjid.heron.sheets.preview
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsAction
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsState
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsStateHolder
+import com.tunjid.heron.sheets.eventeditor.EventEditorAction
+import com.tunjid.heron.sheets.eventeditor.EventEditorState
+import com.tunjid.heron.sheets.eventeditor.EventEditorStateHolder
 import com.tunjid.heron.sheets.inference.InferenceAction
 import com.tunjid.heron.sheets.inference.InferenceState
 import com.tunjid.heron.sheets.inference.InferenceStateHolder
@@ -94,6 +97,12 @@ fun stubSheetStateHolder(
             EmbeddableRecordOptionsStateHolder,
             ActionSuspendingStateMutator<EmbeddableRecordOptionsAction, EmbeddableRecordOptionsState>
             by EmbeddableRecordOptionsState.Immutable().asNoOpActionSuspendingStateMutator() {}
+
+    EventEditorStateHolder::class ->
+        object :
+            EventEditorStateHolder,
+            ActionSuspendingStateMutator<EventEditorAction, EventEditorState>
+            by EventEditorState.Immutable().asNoOpActionSuspendingStateMutator() {}
 
     InferenceStateHolder::class ->
         object :
