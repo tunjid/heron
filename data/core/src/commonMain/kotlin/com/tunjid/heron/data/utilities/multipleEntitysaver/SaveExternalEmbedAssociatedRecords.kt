@@ -18,6 +18,7 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.embed.ExternalColorRGB
+import app.bsky.embed.ExternalView
 import app.bsky.embed.ExternalViewExternal
 import app.bsky.embed.ExternalViewExternalSource
 import app.bsky.embed.ExternalViewExternalSourceTheme
@@ -33,14 +34,20 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardRecommendationUri
+import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
+import com.tunjid.heron.data.database.entities.StandardRecommendationEntity
+import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedProfilesEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedRecordEntity
+import com.tunjid.heron.data.network.models.article
+import com.tunjid.heron.data.network.models.articlePublication
 import com.tunjid.heron.data.network.models.associatedStandardRefs
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.network.models.stubProfileEntity
@@ -57,11 +64,18 @@ import kotlin.time.Instant
  * `null`) so [MultipleEntitySaver.flushPendingOperations] routes them through `insertOrIgnore` and
  * they never clobber a fully-resolved record. The strong-ref cid is preserved on the
  * [PostExternalAssociatedRecordEntity] linkage instead.
+ *
+ * When the appview hydrates [ExternalView.data] as an article or publication, the stubbed document
+ * is seeded with its recommendation count, and the viewer's recommendation / subscription is saved
+ * or removed. Viewer state is only touched when the hydrated data carries a `viewer` object, so an
+ * unhydrated or unauthenticated view never removes it.
  */
 internal fun MultipleEntitySaver.addBlueskyIndexedExternalAssociatedRecords(
-    externalView: ExternalViewExternal,
+    view: ExternalView,
     postUri: PostUri,
+    viewingProfileId: ProfileId?,
 ) {
+    val externalView = view.external
     val refs = externalView.associatedStandardRefs() ?: return
     val externalEmbedUri = GenericUri(externalView.uri.uri)
     val associatedProfiles = externalView.associatedProfiles
@@ -89,6 +103,24 @@ internal fun MultipleEntitySaver.addBlueskyIndexedExternalAssociatedRecords(
                 recordCid = refs.publicationCid,
             ),
         )
+        if (viewingProfileId != null) view.articlePublication?.viewer?.let { viewer ->
+            viewer.subscription?.let { subscriptionUri ->
+                add(
+                    StandardSubscriptionEntity(
+                        uri = StandardSubscriptionUri(subscriptionUri.atUri),
+                        cid = null,
+                        publicationUri = pubUri,
+                        viewingProfileId = viewingProfileId,
+                        sortedAt = subscriptionUri.tidInstant ?: Instant.DISTANT_PAST,
+                    ),
+                )
+            } ?: remove(
+                StandardSubscriptionEntity.Deletion(
+                    publicationUri = pubUri,
+                    viewingProfileId = viewingProfileId,
+                ),
+            )
+        }
     }
 
     refs.documentUri?.let { docUri ->
@@ -101,6 +133,7 @@ internal fun MultipleEntitySaver.addBlueskyIndexedExternalAssociatedRecords(
                 uri = docUri,
                 view = externalView,
                 publicationUri = refs.publicationUri,
+                recommendationCount = view.article?.likeCount ?: 0,
             ),
         )
         add(
@@ -111,6 +144,24 @@ internal fun MultipleEntitySaver.addBlueskyIndexedExternalAssociatedRecords(
                 recordCid = refs.documentCid,
             ),
         )
+        if (viewingProfileId != null) view.article?.viewer?.let { viewer ->
+            viewer.like?.let { recommendationUri ->
+                add(
+                    StandardRecommendationEntity(
+                        uri = StandardRecommendationUri(recommendationUri.atUri),
+                        cid = null,
+                        documentUri = docUri,
+                        viewingProfileId = viewingProfileId,
+                        sortedAt = recommendationUri.tidInstant ?: Instant.DISTANT_PAST,
+                    ),
+                )
+            } ?: remove(
+                StandardRecommendationEntity.Deletion(
+                    documentUri = docUri,
+                    viewingProfileId = viewingProfileId,
+                ),
+            )
+        }
     }
 
     // The owners of the backing records (viewExternal.associatedProfiles).
@@ -203,6 +254,7 @@ private fun stubStandardDocumentEntity(
     uri: StandardDocumentUri,
     view: ExternalViewExternal,
     publicationUri: StandardPublicationUri?,
+    recommendationCount: Long,
 ) = StandardDocumentEntity(
     uri = uri,
     // Null cid forces insertOrIgnore so a stub never clobbers a resolved document.
@@ -221,7 +273,8 @@ private fun stubStandardDocumentEntity(
     tags = null,
     publicationUri = publicationUri,
     markdownContent = null,
-    recommendationCount = 0,
+    // Only lands on first insert: stubs go through insertOrIgnore.
+    recommendationCount = recommendationCount,
 )
 
 private fun ExternalViewExternalSourceTheme.toBasicTheme() = StandardPublicationEntity.BasicTheme(

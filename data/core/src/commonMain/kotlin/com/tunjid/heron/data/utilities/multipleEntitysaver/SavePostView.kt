@@ -62,13 +62,14 @@ internal fun MultipleEntitySaver.add(
     }
     postView.externalAssociatedView()?.let { externalView ->
         addBlueskyIndexedExternalAssociatedRecords(
-            externalView = externalView,
+            view = externalView,
             postUri = postEntity.uri,
+            viewingProfileId = viewingProfileId,
         )
         postView.externalRecordUris().forEach { recordUri ->
             maybeAddHeronIndexedExternalRecord(
                 recordUri = recordUri,
-                externalEmbed = externalView.asExternalEmbedEntity(),
+                externalEmbed = externalView.external.asExternalEmbedEntity(),
                 postUri = postEntity.uri,
             )
         }
