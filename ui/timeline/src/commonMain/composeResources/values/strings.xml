@@ -57,6 +57,9 @@
     <string name="link_document_to_post">Link document to this post</string>
     <string name="link_document_to_post_overwrite_prompt">This document already links to another post. Replace it with this one?</string>
     <string name="unlink_document_from_post">Unlink document from this post</string>
+    <string name="attach_post_to_event">Use this post for event comments</string>
+    <string name="attach_post_to_event_overwrite_prompt">This event already uses another post for its comments. Use this one instead?</string>
+    <string name="detach_post_from_event">Stop using this post for event comments</string>
     <string name="videos">videos</string>
     <string name="text_and_embeds">text and embeds</string>
     <string name="condensed_media">condensed media</string>
