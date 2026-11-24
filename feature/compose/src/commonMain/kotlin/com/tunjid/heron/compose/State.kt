@@ -20,6 +20,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.Gif
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkPreview
@@ -75,6 +76,8 @@ interface State {
         @Transient
         val video: RestrictedFile.Media.Video? = null,
         @Transient
+        val event: Event.Put? = null,
+        @Transient
         val messages: List<Memo> = emptyList(),
         @Transient
         val suggestedProfiles: List<Profile> = emptyList(),
@@ -119,6 +122,15 @@ val State.hasComposedContent
 val State.hasGifPreview
     get() = linkPreview?.embed?.asEmbeddedGifOrNull() != null
 
+val State.canAddMedia
+    get() = event == null
+
+val State.canAddEvent
+    get() = event == null && photos.isEmpty() && video == null
+
+val State.canReplaceLinkPreview
+    get() = !hasGifPreview && event == null
+
 val State.hasLongPost
     get() = when (val type = postType) {
         is Post.Create.Mention -> type.profile.handle.id.length
@@ -142,6 +154,10 @@ sealed class Action(val key: String) {
         val gif: Gif,
     ) : Action("SelectGif")
 
+    data class AttachEvent(
+        val event: Event.Put,
+    ) : Action("AttachEvent")
+
     data class CreatePost(
         val postType: Post.Create?,
         val authorId: ProfileId,
@@ -153,6 +169,7 @@ sealed class Action(val key: String) {
         val linkPreview: LinkPreview?,
         val interactionPreference: PostInteractionSettingsPreference?,
         val sourceDraftId: DraftId? = null,
+        val event: Event.Put? = null,
     ) : Action("CreatePost")
 
     data class LoadDraft(

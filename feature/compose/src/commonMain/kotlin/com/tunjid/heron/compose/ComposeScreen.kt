@@ -143,7 +143,7 @@ internal fun ComposeScreen(
                     state.embeddedRecord?.embeddableRecordUri?.uri -> Unit
                     state.linkPreview?.embed?.uri?.uri -> Unit
                     state.dismissedUri?.uri -> Unit
-                    else -> if (!state.hasGifPreview) actions(Action.UriDetected(uri))
+                    else -> if (state.canReplaceLinkPreview) actions(Action.UriDetected(uri))
                 }
             },
             removeMediaItem = { item ->

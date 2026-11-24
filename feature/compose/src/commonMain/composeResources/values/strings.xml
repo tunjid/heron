@@ -43,6 +43,7 @@
     <string name="post_language_title">Post languages</string>
     <string name="post_language_search">Search languages</string>
     <string name="add_gif">Add GIF</string>
+    <string name="add_event">Add event</string>
     <string name="gif_search_placeholder">Search KLIPY</string>
     <string name="gif_category_trending">Trending GIFs</string>
     <string name="gif_category_love">Love GIFs</string>
